@@ -570,14 +570,20 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
 # creates the group bys
 ## I tried A TON OF THINGS, but the most predictably behaving version...
 ## was to create a large string via mapply
-summarizerFunction <- function(tbl, outcome_vars, outcome_functions, mitj, cnuk,
+summarizerFunction <- function(tbl,
+                               outcome_k1,
+                               outcome_k2, outcome_functions, mitj, cnuk,
                                range_maxi = range_max,
                                range_mini, verbose = FALSE, memory_manage = 0L,skinny_summarize_call=TRUE,
                                SEN=FALSE
 ) {
-  if (length(outcome_vars) != length(outcome_functions)) {
+  if (length(outcome_k1) != length(outcome_functions)) {
     stop("The vectors of function names and variables must be the same length")
   }
+  if (length(outcome_k1) != length(outcome_k2)) {
+    stop("The vectors of outcome names must be the same length")
+  }
+
   if(SEN==FALSE){
     if(skinny_summarize_call==TRUE){
       if(memory_manage>1|| !("addRel" %in% names(tbl))) {
@@ -633,90 +639,94 @@ summarizerFunction <- function(tbl, outcome_vars, outcome_functions, mitj, cnuk,
   }
 
 
-  summarize_parts <- mapply(function(var, fun) {
+  summarize_parts <- mapply(function(var_k1,
+                                     var_k2,
+                                     fun) {
     if (fun == "polychorFunction") {
-      paste0(var, "_", fun, " = list(try_NA(polychor(",
-             var, "_k1,",
-             var, "_k2, std.err=TRUE)) %>%
+      paste0(var_k1, "_", fun, " = list(try_NA(polychor(",
+             var_k1, "_k1,",
+             var_k2, "_k2, std.err=TRUE)) %>%
                  {list(rho = try_NA(.$rho),
                        se = sqrt(try_NA(.$var)),
                        chisq = try_NA(.$chisq),
                        df = try_NA(.$df))})")
     } else if (fun == "ml_polychorFunction") {
-      paste0(var, "_", fun, " = try_NA(polychor(", var, "_k1,", var, "_k2,ML=TRUE))")
+      paste0(var_k1, "_", fun, " = try_NA(polychor(", var_k1, "_k1,", var_k2, "_k2,ML=TRUE))")
     } else if (fun == "relriskFunction") {
-      paste0(var, "_", fun, " = list(try_NA(relriskFunction(",
-             var, "_k1, ",
-             var, "_k2)) %>%
+      paste0(var_k1, "_", fun, " = list(try_NA(relriskFunction(",
+             var_k1, "_k1, ",
+             var_k2, "_k2)) %>%
              {list(rr = try_NA(.[1]),
                    LL = try_NA(.[2]),
                    UL = try_NA(.[3]))})")
     } else if (fun %in% c("phi_both", "rr_exposed_cases", "rr_a")){
-      paste0(var, "_", fun, "= try_NA(sum(", var, "_k1 == 1 & ",var, "_k2 == 1, na.rm=TRUE))")
+      paste0(var_k1, "_", fun, "= try_NA(sum(", var_k1, "_k1 == 1 & ",var_k2, "_k2 == 1, na.rm=TRUE))")
     } else if (fun %in% c("phi_none", "rr_unexposed_noncases", "rr_d")) {
-      paste0(var, "_", fun, "= try_NA(sum(", var, "_k1 == 0 & ",var, "_k2 == 0, na.rm=TRUE))")
+      paste0(var_k1, "_", fun, "= try_NA(sum(", var_k1, "_k1 == 0 & ",var_k2, "_k2 == 0, na.rm=TRUE))")
     } else if (fun %in% c("phi_one", "rr_discordant", "rr_b_plus_c")) {
-      paste0(var, "_", fun, "= try_NA(sum((", var, "_k1 == 1 & ",var, "_k2 == 0) | (", var, "_k1 == 0 & ",var, "_k2 == 1), na.rm = TRUE))")
+      paste0(var_k1, "_", fun, "= try_NA(sum((", var_k1, "_k1 == 1 & ",var_k2, "_k2 == 0) | (", var_k1, "_k1 == 0 & ",var_k2, "_k2 == 1), na.rm = TRUE))")
     } else if (fun %in% c("phi_k1_yes_k2_no", "rr_exposed_noncases", "rr_b")) {
-      paste0(var, "_", fun, " = try_NA(sum(", var, "_k1 == 1 & ", var, "_k2 == 0, na.rm = TRUE))")
+      paste0(var_k1, "_", fun, " = try_NA(sum(", var_k1, "_k1 == 1 & ", var_k2, "_k2 == 0, na.rm = TRUE))")
 
     } else if (fun %in% c("phi_k1_no_k2_yes", "rr_unexposed_cases", "rr_c")) {
-      paste0(var, "_", fun, " = try_NA(sum(", var, "_k1 == 0 & ", var, "_k2 == 1, na.rm = TRUE))")
+      paste0(var_k1, "_", fun, " = try_NA(sum(", var_k1, "_k1 == 0 & ", var_k2, "_k2 == 1, na.rm = TRUE))")
     } else if (fun == "phi_est"){
-      paste0(var, "_", fun, " = try_NA(ci.phi(.05,f11= ",
-             var, "_phi_both, f01= ",
-             var, "_phi_one, f10=",
-             var, "_phi_one, f00 = ",
-             var, "_phi_none))[1]")
+      paste0(var_k1, "_", fun, " = try_NA(ci.phi(.05,f11= ",
+             var_k1, "_phi_both, f01= ",
+             var_k1, "_phi_one, f10=",
+             var_k1, "_phi_one, f00 = ",
+             var_k1, "_phi_none))[1]")
     } else if (fun == "phi_se"){
-      paste0(var, "_", fun, " = try_NA(ci.phi(.05,f11= ",
-             var, "_phi_both, f01= ",
-             var, "_phi_one,f10=",
-             var, "_phi_one,f00 = ",
-             var, "_phi_none))[2]")
+      paste0(var_k1, "_", fun, " = try_NA(ci.phi(.05,f11= ",
+             var_k1, "_phi_both, f01= ",
+             var_k1, "_phi_one,f10=",
+             var_k1, "_phi_one,f00 = ",
+             var_k1, "_phi_none))[2]")
     } else if (fun == "phi_LL"){
-      paste0(var, "_", fun, " = try_NA(ci.phi(.05,f11= ",
-             var, "_phi_both, f01= ",
-             var, "_phi_one,f10=",
-             var, "_phi_one,f00 = ",
-             var, "_phi_none))[3]")
+      paste0(var_k1, "_", fun, " = try_NA(ci.phi(.05,f11= ",
+             var_k1, "_phi_both, f01= ",
+             var_k1, "_phi_one,f10=",
+             var_k1, "_phi_one,f00 = ",
+             var_k1, "_phi_none))[3]")
     } else if (fun == "phi_UL"){
-      paste0(var, "_", fun, " = try_NA(ci.phi(.05,f11= ",
-             var, "_phi_both, f01= ",
-             var, "_phi_one,f10=",
-             var, "_phi_one,f00 = ",
-             var, "_phi_none))[4]")
+      paste0(var_k1, "_", fun, " = try_NA(ci.phi(.05,f11= ",
+             var_k1, "_phi_both, f01= ",
+             var_k1, "_phi_one,f10=",
+             var_k1, "_phi_one,f00 = ",
+             var_k1, "_phi_none))[4]")
     } else if (fun == "phi_ci"){
-      paste0(var, "_", fun, " = list(try_NA(ci.phi(.05,f11= ",
-             var, "_phi_both, f01= ",
-             var, "_phi_one,f10=",
-             var, "_phi_one,f00 = ",
-             var, "_phi_none))  %>%
+      paste0(var_k1, "_", fun, " = list(try_NA(ci.phi(.05,f11= ",
+             var_k1, "_phi_both, f01= ",
+             var_k1, "_phi_one,f10=",
+             var_k1, "_phi_one,f00 = ",
+             var_k1, "_phi_none))  %>%
              {list(phi = try_NA(.$Estimate),
                    se = try_NA(.$SE),
                    LL = try_NA(.$LL),
                    UL = try_NA(.$UL))})")
     } else if (fun == "rr_risk_exposed") {
-      paste0(var, "_", fun, " = try_NA(ifelse((",
-             var, "_rr_a + ", var, "_rr_b) > 0, ",
-             var, "_rr_a / (", var, "_rr_a + ", var, "_rr_b), ",
+      paste0(var_k1, "_", fun_k1, " = try_NA(ifelse((",
+             var_k1, "_rr_a + ", var_k1, "_rr_b) > 0, ",
+             var_k1, "_rr_a / (", var_k1, "_rr_a + ", var_k1, "_rr_b), ",
              "NA_real_))")
 
     } else if (fun == "rr_risk_unexposed") {
-      paste0(var, "_", fun, " = try_NA(ifelse((",
-             var, "_rr_c + ", var, "_rr_d) > 0, ",
-             var, "_rr_c / (", var, "_rr_c + ", var, "_rr_d), ",
+      paste0(var_k1, "_", fun, " = try_NA(ifelse((",
+             var_k1, "_rr_c + ", var_k1, "_rr_d) > 0, ",
+             var_k1, "_rr_c / (", var_k1, "_rr_c + ", var_k1, "_rr_d), ",
              "NA_real_))")
 
     } else if (fun == "rr_est") {
-      paste0(var, "_", fun, " = try_NA(ifelse(",
-             var, "_rr_risk_unexposed > 0, ",
-             var, "_rr_risk_exposed / ", var, "_rr_risk_unexposed, ",
+      paste0(var_k1, "_", fun, " = try_NA(ifelse(",
+             var_k1, "_rr_risk_unexposed > 0, ",
+             var_k1, "_rr_risk_exposed / ", var, "_rr_risk_unexposed, ",
              "NA_real_))")
     }else{
-      paste0(var, "_", fun, " = try_NA(", fun, "(", var, "))")
+      paste0(var_k1, "_", fun, " = try_NA(", fun, "(", var_k1, "))")
     }
-  }, outcome_vars, outcome_functions, SIMPLIFY = FALSE)
+  }, outcome_k1, outcome_k2,
+
+  outcome_functions, SIMPLIFY = FALSE)
   # if unnesting variable is needed
   unnest_parts <- c()
 
@@ -733,7 +743,7 @@ summarizerFunction <- function(tbl, outcome_vars, outcome_functions, mitj, cnuk,
   }
 
   if ("phi_ci" %in% outcome_functions) {
-    var_phi_unnest <- outcome_vars[outcome_functions == "phi_ci"]
+    var_phi_unnest <- outcome_k1[outcome_functions == "phi_ci"]
     unnest_parts <- c(
       unnest_parts,
       mapply(function(var) {
@@ -742,7 +752,7 @@ summarizerFunction <- function(tbl, outcome_vars, outcome_functions, mitj, cnuk,
     )
   }
   if ("relriskFunction" %in% outcome_functions) {
-    var_rr_unnest <- outcome_vars[outcome_functions == "relriskFunction"]
+    var_rr_unnest <- outcome_k1[outcome_functions == "relriskFunction"]
     unnest_parts <- c(
       unnest_parts,
       mapply(function(var) {
