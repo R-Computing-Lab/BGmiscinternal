@@ -16,8 +16,8 @@ SENByGroup(
   doubleentered = TRUE,
   slice_1000 = TRUE,
   cleanup = TRUE,
-  drop_variables = c("mitRel", "USA_quantile_k1", "USA_quantile_k2",
-    "SWE_quantile_k1", "SWE_quantile_k2"),
+  drop_variables = c("mitRel", "USA_quantile_k1", "USA_quantile_k2", "SWE_quantile_k1",
+    "SWE_quantile_k2"),
   outcome_vars = c("USA_flag_10", "USA_flag_10"),
   outcome_functions = c("polychorFunction", "ml_polychorFunction"),
   grouping_vars = NA,
@@ -108,7 +108,7 @@ Default is \code{0}.}
 }
 \value{
 Called primarily for its side effect of writing a CSV file.
-Returns \code{NULL} invisibly.
+  Returns \code{NULL} invisibly.
 }
 \description{
 A variant of \code{\link{correlateOutcomesByGroup}} that additionally

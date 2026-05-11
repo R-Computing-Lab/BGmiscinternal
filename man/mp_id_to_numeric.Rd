@@ -14,7 +14,7 @@ mp_id_to_numeric(x, prefix = "MP")
 }
 \value{
 A numeric vector the same length as \code{x}.  Elements that cannot
-be coerced after prefix removal are returned as \code{NA_real_}.
+  be coerced after prefix removal are returned as \code{NA_real_}.
 }
 \description{
 Strips a leading prefix (default \code{"MP"}) from character IDs and coerces

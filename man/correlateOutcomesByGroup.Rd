@@ -16,14 +16,13 @@ correlateOutcomesByGroup(
   doubleentered = TRUE,
   slice_1000 = FALSE,
   cleanup = TRUE,
-  drop_variables = c("mitRel", "USA_quantile_k1", "USA_quantile_k2",
-    "SWE_quantile_k1", "SWE_quantile_k2"),
+  drop_variables = c("mitRel", "USA_quantile_k1", "USA_quantile_k2", "SWE_quantile_k1",
+    "SWE_quantile_k2"),
   outcome_vars = NULL,
   outcome_k1 = NULL,
   outcome_k2 = NULL,
   outcome_functions = c("meanFunction", "meanFunction", "meanFunction", "meanFunction",
-    "polychorFunction", "ml_polychorFunction", "polychorFunction",
-    "ml_polychorFunction"),
+    "polychorFunction", "ml_polychorFunction", "polychorFunction", "ml_polychorFunction"),
   grouping_vars = NA,
   grouping_filename = NULL,
   verbose = TRUE,
@@ -139,7 +138,7 @@ columns (unique individual counts, average dyads per ID).  Default is
 }
 \value{
 Called primarily for its side effect of writing a CSV file to
-\code{file_path_stem}.  Returns \code{NULL} invisibly.
+  \code{file_path_stem}.  Returns \code{NULL} invisibly.
 }
 \description{
 The main workhorse function of this package.  Iterates over bins of

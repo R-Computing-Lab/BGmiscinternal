@@ -4,13 +4,6 @@
 # Filename: functions_SENByGroup
 # Purpose: this code calcuates the correlation between the outcomes for each kin group, groups by mtdna, cnu, and bins of R
 
-#------------------------------------------------------------------------------
-
-## First are the helper functions
-options(scipen = 10, digits = 11)
-## passes subset if slice_1000 is true, otherwise passes entire thing
-
-source("functions/14CorrelateOutcomesByGroup_helperfunctions.R")
 
 # here's the mega function
 #' Summarize Extended Network (SEN) Outcomes by Kinship Group
@@ -410,7 +403,7 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
   remove(dataRelatedPair_merge)
   remove(temp)
   remove(aim1_cors)
-
+  # note: these kin are double entered
 }
 # NOTE: The complete implementation of estimate_icc_latent_from_dyadic follows below.
 #' Estimate Intraclass Correlation from Dyadic Kinship Data
@@ -446,7 +439,9 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
 #'
 #' @export
 estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
-                                            method = c("latent", "mean", "lmer","glmer"),
+                                            method = c("latent",
+                                                       "mean",
+                                                       "lmer","glmer"),
                                             binary = TRUE) {
   method <- match.arg(method)
 

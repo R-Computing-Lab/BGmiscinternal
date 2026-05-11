@@ -6,15 +6,16 @@
 \usage{
 hello()
 }
-\description{
-A simple example function that prints \code{"Hello, world!"} to the console.
-
-You can learn more about package authoring with RStudio at:
-\url{https://r-pkgs.org}
-}
 \value{
 Called for its side effect of printing to the console.
-Returns the printed string invisibly.
+  Returns the printed string invisibly.
+}
+\description{
+A simple example function that prints \code{"Hello, world!"} to the console.
+}
+\details{
+You can learn more about package authoring with RStudio at:
+\url{https://r-pkgs.org}
 }
 \examples{
 hello()

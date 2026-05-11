@@ -97,6 +97,9 @@ sliceFunction <- function(tbl, slice_1000, memory_manage = 0L) {
     tbl
   }
 }
+#' @rdname sliceFunction
+#' @keywords internal
+sliceFuction <- sliceFunction
 
 # passes thru multiple grouping variables. right now I'm using groupby, but this could be replaced by expand grid.
 # it does allow for multiple groups
