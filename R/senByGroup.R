@@ -183,11 +183,11 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
             if (all(c("age_k1", "age_k2") %in% names(dataRelatedPair_merge))) {
               dataRelatedPair_merge <- dataRelatedPair_merge %>%
                 drop_na(age_k1, age_k2) %>%
-                filter(age_k1 >= min_age | age_k2 >= min_age)
+                dplyr::filter(age_k1 >= min_age | age_k2 >= min_age)
             } else if ("age" %in% names(dataRelatedPair_merge)) {
               dataRelatedPair_merge <- dataRelatedPair_merge %>%
                 drop_na(age) %>%
-                filter(age >= min_age)
+                dplyr::filter(age >= min_age)
             }
             if (verbose == TRUE) {
               message(paste(
@@ -202,7 +202,7 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
 
           # possible optimization
           dataRelatedPair_merge <- dataRelatedPair_merge %>%
-            dplyr::mutate(across(where(is.numeric), round, 3))
+            dplyr::mutate(dplyr::across(where(is.numeric), round, 3))
         }
 
         if (length(dataRelatedPair_merge) == 0 || nrow(dataRelatedPair_merge) > max_kin_per_bin || (length(dataRelatedPair_merge) == 1 && is.na(dataRelatedPair_merge))) {
@@ -287,10 +287,10 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
             temp <- try_NA(dataRelatedPair_merge %>% dplyr::filter(cnuRel == cnuk) %>%
                              sliceFuction(slice_1000 = slice_1000, memory_manage = memory_manage) %>%
                              mutateFunction(mutate_vars = mutate_vars, verbose = verbose, memory_manage = memory_manage) %>%
-                             #     group_by(ID1) %>% mutate(
-                             #     unique_ID2s = n_distinct(ID2)
-                             #      ) %>% ungroup() %>% group_by(ID2) %>% mutate(
-                             #        unique_ID1s = n_distinct(ID1)
+                             #     group_by(ID1) %>% dplyr::mutate(
+                             #     unique_ID2s = dplyr::n_distinct(ID2)
+                             #      ) %>% ungroup() %>% group_by(ID2) %>% dplyr::mutate(
+                             #        unique_ID1s = dplyr::n_distinct(ID1)
                              #      ) %>% ungroup()  %>%
                              group_byFunction(grouping_vars, verbose = verbose, memory_manage = memory_manage) %>%
                              summarizerFunction(outcome_vars, outcome_functions,
@@ -429,7 +429,7 @@ estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
     library(psych)
     icc_data <- df_long %>%
       group_by(ID) %>%
-      mutate(obs_num = row_number()) %>%
+      dplyr::mutate(obs_num = row_number()) %>%
       ungroup() %>%
       tidyr::pivot_wider(names_from = obs_num, values_from = outcome)
 
