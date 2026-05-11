@@ -4,15 +4,71 @@
 # Filename: functions_SENByGroup
 # Purpose: this code calcuates the correlation between the outcomes for each kin group, groups by mtdna, cnu, and bins of R
 
-#------------------------------------------------------------------------------
-
-## First are the helper functions
-options(scipen = 10, digits = 11)
-## passes subset if slice_1000 is true, otherwise passes entire thing
-
-source("functions/14CorrelateOutcomesByGroup_helperfunctions.R")
 
 # here's the mega function
+#' Summarize Extended Network (SEN) Outcomes by Kinship Group
+#'
+#' A variant of \code{\link{correlateOutcomesByGroup}} that additionally
+#' computes extended network statistics (unique individual counts, average
+#' dyads per ID, etc.) for each relatedness bin.  The function loops over
+#' bins of additive-genetic relatedness, mtDNA relatedness, and CNU status;
+#' reads pre-built bin files; double-enters the data (optional); and
+#' summarizes the requested outcomes.  Results are appended to a CSV file.
+#'
+#' @param df_foldername Character string.  Name of the data folder/dataset.
+#'   Default is \code{"longevity_skinny_matpat"}.
+#' @param binwidth_num Numeric vector of bin half-widths.  Must be the same
+#'   length as \code{binwidth_cha}.  Default is \code{c(0.1, 0.05)}.
+#' @param binwidth_cha Character vector of bin-width labels used in file
+#'   names.  Default is \code{c("10", "05")}.
+#' @param kin_degree_max Integer.  Maximum kinship degree.  Default is
+#'   \code{12}.
+#' @param kin_degree_min Integer.  Minimum kinship degree.  Default is
+#'   \code{0}.
+#' @param max_kin_per_bin Numeric.  Bins exceeding this row count are skipped.
+#'   Default is \code{8.7e9}.
+#' @param cnu Integer vector of CNU values to loop over.  Default is
+#'   \code{c(1, 0)}.
+#' @param mit Integer vector of mtDNA relatedness values to loop over.
+#'   Default is \code{c(1, 0)}.
+#' @param doubleentered Logical.  If \code{TRUE} (default), each dyadic data
+#'   set is double-entered.
+#' @param slice_1000 Logical.  If \code{TRUE} (default), only the first 1 000
+#'   rows of each bin are processed.
+#' @param cleanup Logical.  If \code{TRUE} (default), temporary scratch files
+#'   are removed on exit.
+#' @param drop_variables Character vector of column names to drop when reading
+#'   bin files.
+#' @param outcome_vars Character vector of outcome variable base names.
+#'   Default is \code{c("USA_flag_10", "USA_flag_10")}.
+#' @param outcome_functions Character vector of function names to apply to
+#'   each outcome pair.  Default is
+#'   \code{c("polychorFunction", "ml_polychorFunction")}.
+#' @param grouping_vars Character vector of additional grouping variables, or
+#'   \code{NA} for none.  Default is \code{NA}.
+#' @param grouping_filename Character string for the output file name, or
+#'   \code{NULL}.  Default is \code{NULL}.
+#' @param verbose Logical.  If \code{TRUE} (default), progress messages are
+#'   emitted.
+#' @param mutate_vars Character string (or \code{NULL}) passed to
+#'   \code{\link{mutateFunction}}.  Default is \code{NULL}.
+#' @param memory_manage Integer memory-management flag (\code{0L}, \code{1L},
+#'   or \code{2L}).  Default is \code{0L}.
+#' @param data_path Character string giving the root data directory.  Default
+#'   is \code{""}.
+#' @param file_path_stem Character string giving the output CSV path stem.
+#'   Default is \code{"U:/IRB_00143000/mtdna/aim1_cor/cor_"}.
+#' @param skinny_summarize_call Logical.  If \code{TRUE} (default), empirical
+#'   \code{addRel} distribution statistics are omitted from the summary.
+#' @param age_filter Logical.  If \code{TRUE}, kin younger than
+#'   \code{min_age} are excluded.  Default is \code{FALSE}.
+#' @param min_age Numeric.  Minimum age when \code{age_filter = TRUE}.
+#'   Default is \code{0}.
+#'
+#' @return Called primarily for its side effect of writing a CSV file.
+#'   Returns \code{NULL} invisibly.
+#'
+#' @export
 SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
                        binwidth_num = c(.1, .05),
                        binwidth_cha = c("10", "05"),
@@ -285,7 +341,7 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
             mitj <- mit[j]
 
             temp <- try_NA(dataRelatedPair_merge %>% dplyr::filter(cnuRel == cnuk) %>%
-                             sliceFuction(slice_1000 = slice_1000, memory_manage = memory_manage) %>%
+                             sliceFunction(slice_1000 = slice_1000, memory_manage = memory_manage) %>%
                              mutateFunction(mutate_vars = mutate_vars, verbose = verbose, memory_manage = memory_manage) %>%
                              #     group_by(ID1) %>% mutate(
                              #     unique_ID2s = n_distinct(ID2)
@@ -347,25 +403,45 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
   remove(dataRelatedPair_merge)
   remove(temp)
   remove(aim1_cors)
-
+  # note: these kin are double entered
 }
-# note: these kin are double entered
-estimate_icc_latent_from_dyadic <- function(tbl, outcome_var, method = c("latent", "mean", "glmer","lmer")) {
-  method <- match.arg(method)
-
-  outcome_k1 <- paste0(outcome_var, "_k1")
-  outcome_k2 <- paste0(outcome_var, "_k2")
-
-  df_long <- tibble::tibble(
-    ID = c(tbl$ID1, tbl$ID2),
-    outcome = c(tbl[[outcome_k1]], tbl[[outcome_k2]])
-  ) %>%
-    dplyr::filter(!is.na(outcome))
-
-
-}
+# NOTE: The complete implementation of estimate_icc_latent_from_dyadic follows below.
+#' Estimate Intraclass Correlation from Dyadic Kinship Data
+#'
+#' Estimates an intraclass correlation coefficient (ICC) from double-entered
+#' dyadic data in which each row represents a kin pair.  Long-format data are
+#' constructed internally by stacking the \emph{k1} and \emph{k2} columns,
+#' then the ICC is estimated using the chosen method.
+#'
+#' @param tbl A data frame containing dyadic kinship data with columns
+#'   \code{ID1}, \code{ID2}, and outcome columns named
+#'   \code{<outcome_var>_k1} and \code{<outcome_var>_k2}.
+#' @param outcome_var Character string: base name of the outcome variable
+#'   (without the \code{_k1} / \code{_k2} suffix).
+#' @param method Character string selecting the estimation method.  One of:
+#'   \describe{
+#'     \item{\code{"mean"}}{Ratio of between-person variance (of per-ID means)
+#'       to total variance.}
+#'     \item{\code{"latent"}}{Between-person variance divided by total variance;
+#'       for binary outcomes, total variance is estimated as
+#'       \eqn{p(1-p)} (latent-scale approximation).}
+#'     \item{\code{"lmer"}}{Mixed-effects model via \code{lme4::lmer()}.}
+#'     \item{\code{"glmer"}}{Mixed-effects logistic model via
+#'       \code{lme4::glmer()} (binary outcomes only).}
+#'   }
+#'   Default is \code{"latent"}.
+#' @param binary Logical.  Indicates whether the outcome is binary.  Only
+#'   relevant for the \code{"latent"} and \code{"glmer"} methods.  For
+#'   \code{"glmer"}, setting \code{binary = FALSE} raises an error.  Default
+#'   is \code{TRUE}.
+#'
+#' @return A single numeric value: the estimated ICC.
+#'
+#' @export
 estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
-                                            method = c("latent", "mean", "lmer","glmer"),
+                                            method = c("latent",
+                                                       "mean",
+                                                       "lmer","glmer"),
                                             binary = TRUE) {
   method <- match.arg(method)
 

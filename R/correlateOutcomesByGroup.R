@@ -13,6 +13,93 @@ options(scipen = 10, digits = 11)
 
 
 # here's the mega function
+#' Correlate Outcomes by Kinship Group
+#'
+#' The main workhorse function of this package.  Iterates over bins of
+#' additive-genetic relatedness (R), mitochondrial-DNA (mtDNA) relatedness,
+#' and common nuclear-environment (CNU) status; reads per-bin data files;
+#' optionally double-enters each dyadic data set; applies user-specified
+#' mutation steps; groups the data; and computes correlation/association
+#' statistics for each specified outcome pair.  Results are written
+#' incrementally to a CSV file.
+#'
+#' @param df_foldername Character string.  Name of the data folder/dataset.
+#'   Default is \code{"longevity_skinny_matpat"}.
+#' @param binwidth_num Numeric vector of bin half-widths (e.g. \code{0.10} for
+#'   a \eqn{\pm 10\%} window around each relatedness center).  Must be the
+#'   same length as \code{binwidth_cha}.  Default is \code{c(0.1, 0.05)}.
+#' @param binwidth_cha Character vector of bin-width labels used in file names
+#'   (e.g. \code{"10"} corresponds to \code{0.10}).  Default is
+#'   \code{c("10", "05")}.
+#' @param kin_degree_max Integer.  Maximum kinship degree to process
+#'   (\eqn{2^{-\text{degree}}} gives the relatedness center).
+#'   Default is \code{12}.
+#' @param kin_degree_min Integer.  Minimum kinship degree.  Default is
+#'   \code{0}.
+#' @param max_kin_per_bin Numeric.  Bins containing more rows than this value
+#'   are skipped.  Default is \code{8.7e9} (effectively no limit).
+#' @param cnu Integer vector of CNU values to loop over (typically
+#'   \code{c(1, 0)}).  Default is \code{c(1, 0)}.
+#' @param mit Integer vector of mtDNA relatedness values to loop over
+#'   (typically \code{c(1, 0)}).  Default is \code{c(1, 0)}.
+#' @param doubleentered Logical.  If \code{TRUE} (default) the dyadic data are
+#'   double-entered (each pair appears twice with \emph{k1}/\emph{k2} roles
+#'   swapped) to ensure symmetry.
+#' @param slice_1000 Logical.  If \code{TRUE}, only the first 1 000 rows of
+#'   each bin are processed (useful for testing).  Default is \code{FALSE}.
+#' @param cleanup Logical.  If \code{TRUE} (default), temporary \code{.RDS}
+#'   scratch files created during memory-managed runs are deleted on exit.
+#' @param drop_variables Character vector of column names to drop when reading
+#'   each bin file.  Default drops several quantile columns.
+#' @param outcome_vars Character vector of outcome variable names (base names
+#'   without the \code{_k1}/\code{_k2} suffix).  When supplied,
+#'   \code{outcome_k1} and \code{outcome_k2} are both set to this vector.
+#'   At least one of \code{outcome_vars}, \code{outcome_k1}, or
+#'   \code{outcome_k2} must be non-\code{NULL}.  Default is \code{NULL}.
+#' @param outcome_k1 Character vector of \emph{k1}-side outcome column names.
+#'   Ignored when \code{outcome_vars} is non-\code{NULL}.  Default is
+#'   \code{NULL}.
+#' @param outcome_k2 Character vector of \emph{k2}-side outcome column names.
+#'   Same length as \code{outcome_k1}.  Ignored when \code{outcome_vars} is
+#'   non-\code{NULL}.  Default is \code{NULL}.
+#' @param outcome_functions Character vector of function names to apply to each
+#'   outcome pair.  See \code{\link{summarizerFunction}} for supported values.
+#'   Default is \code{c("meanFunction", "meanFunction", "meanFunction",
+#'   "meanFunction", "polychorFunction", "ml_polychorFunction",
+#'   "polychorFunction", "ml_polychorFunction")}.
+#' @param grouping_vars Character vector of additional grouping variable names,
+#'   or \code{NA} for no additional grouping.  Default is \code{NA}.
+#' @param grouping_filename Character string used in the output file name to
+#'   identify the grouping scheme, or \code{NULL} for none.  Default is
+#'   \code{NULL}.
+#' @param verbose Logical.  If \code{TRUE} (default), progress messages are
+#'   emitted at each major loop iteration.
+#' @param mutate_vars Character string (or \code{NULL}) naming the mutation
+#'   scheme to apply before summarising.  Passed to
+#'   \code{\link{mutateFunction}}.  Default is \code{NULL}.
+#' @param memory_manage Integer flag controlling memory-optimization level:
+#'   \code{0L} = no optimization; \code{1L} = write/read RDS scratch files;
+#'   \code{2L} = additionally use \pkg{data.table}/\pkg{tidyft} operations.
+#'   Default is \code{0L}.
+#' @param data_path Character string giving the root path to the data
+#'   directory.  Default is \code{""} (current working directory).
+#' @param file_path_stem Character string giving the stem of the output CSV
+#'   file path.  Default is \code{"U:/IRB_00143000/mtdna/aim1_cor/cor_"}.
+#' @param skinny_summarize_call Logical.  If \code{TRUE} (default), the
+#'   summary output omits empirical \code{addRel} distribution statistics.
+#' @param age_filter Logical.  If \code{TRUE}, rows where both kin members are
+#'   younger than \code{min_age} are removed before analysis.  Default is
+#'   \code{FALSE}.
+#' @param min_age Numeric.  Minimum age threshold used when
+#'   \code{age_filter = TRUE}.  Default is \code{0}.
+#' @param SEN Logical.  If \code{TRUE}, the summariser computes additional
+#'   columns (unique individual counts, average dyads per ID).  Default is
+#'   \code{FALSE}.
+#'
+#' @return Called primarily for its side effect of writing a CSV file to
+#'   \code{file_path_stem}.  Returns \code{NULL} invisibly.
+#'
+#' @export
 correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                                      binwidth_num = c(.1, .05),
                                      binwidth_cha = c("10", "05"),
@@ -401,7 +488,7 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                 }
 
                 temp <- dataRelatedPair_merge %>%
-                  sliceFuction(slice_1000 = slice_1000, memory_manage = memory_manage) %>%
+                  sliceFunction(slice_1000 = slice_1000, memory_manage = memory_manage) %>%
                   #    mutateFunction(mutate_vars=mutate_vars,verbose=verbose, memory_manage = memory_manage)%>%
                   group_byFunction(grouping_vars, verbose = verbose, memory_manage = memory_manage) %>%
                   summarizerFunction(
@@ -481,7 +568,7 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                   gc()
                 }
                 temp <- dataRelatedPair_merge %>%
-                  sliceFuction(slice_1000 = slice_1000, memory_manage = memory_manage) %>%
+                  sliceFunction(slice_1000 = slice_1000, memory_manage = memory_manage) %>%
                   mutateFunction(mutate_vars = mutate_vars, verbose = verbose, memory_manage = memory_manage) %>%
                   group_byFunction(grouping_vars, verbose = verbose, memory_manage = memory_manage) %>%
                   summarizerFunction(                    outcome_k1,
@@ -500,7 +587,7 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
               dataRelatedPair_merge <- read_rds("dataRelatedPair_merge.RDS") # is needed when there are multiple cnu in the loop
             } else { # unoptimized
               temp <- debug_tbl <- try_NA(dataRelatedPair_merge %>% dplyr::filter(cnuRel == cnuk) %>%
-                                            sliceFuction(slice_1000 = slice_1000, memory_manage = memory_manage) %>%
+                                            sliceFunction(slice_1000 = slice_1000, memory_manage = memory_manage) %>%
                                             mutateFunction(mutate_vars = mutate_vars, verbose = verbose, memory_manage = memory_manage))
 
               if (verbose) {

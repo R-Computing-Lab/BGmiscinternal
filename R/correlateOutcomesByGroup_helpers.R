@@ -10,11 +10,34 @@
 options(scipen = 10, digits = 11)
 
 
-# not in
+#' Not-In Operator
+#'
+#' Returns \code{TRUE} for each element of \code{x} that is \emph{not} present
+#' in \code{table}.  Equivalent to \code{!(\%in\%)}.
+#'
+#' @param x A vector of values to test.
+#' @param table A vector of values to test against.
+#'
+#' @return A logical vector the same length as \code{x}.
+#'
+#' @keywords internal
 `%notin%` <- Negate(`%in%`)
 
-# convert numeric to integers
-
+#' Convert Numeric Columns to Integer Where Possible
+#'
+#' Converts numeric columns of a data frame (or tibble) to integer when every
+#' unique non-missing value in that column is a whole number.  Two modes of
+#' operation are provided, selected by \code{memory_manage}.
+#'
+#' @param tbl A data frame or tibble.
+#' @param memory_manage Integer flag controlling memory strategy.  When
+#'   \code{< 1} a \pkg{dplyr}/\pkg{tidyr} approach is used; when \code{>= 1}
+#'   a \pkg{data.table} in-place approach is used instead.  Default is
+#'   \code{0L}.
+#'
+#' @return A tibble with integer columns wherever conversion was possible.
+#'
+#' @keywords internal
 convert_to_integer <- function(tbl,memory_manage = 0L){
   if(memory_manage<1){
     tbl %>%
@@ -37,23 +60,66 @@ convert_to_integer <- function(tbl,memory_manage = 0L){
   }
 }
 
-#try return NA
-
+#' Try an Expression, Return \code{NA} on Error
+#'
+#' Evaluates \code{expr} and returns \code{NA} (rather than stopping) if the
+#' expression throws an error.
+#'
+#' @param expr An R expression to evaluate.
+#'
+#' @return The result of \code{expr}, or \code{NA} if an error occurs.
+#'
+#' @keywords internal
 try_NA = function(expr){
   tryCatch(expr,error=function(err) NA)
 }
 
-## passes subset if slice_1000 is true, otherwise passes entire thing
-sliceFuction <- function(tbl, slice_1000, memory_manage = 0L) {
+#' Optionally Slice a Table to the First 1 000 Rows
+#'
+#' A thin wrapper around \code{dplyr::slice()} used to subsample large tables
+#' during testing or memory-constrained runs.  When \code{slice_1000 = FALSE}
+#' the input table is returned unchanged.
+#'
+#' @param tbl A data frame or tibble.
+#' @param slice_1000 Logical.  If \code{TRUE}, only the first 1 000 rows are
+#'   returned; if \code{FALSE} the entire table is returned.
+#' @param memory_manage Integer memory-management flag (currently unused but
+#'   kept for API consistency).  Default is \code{0L}.
+#'
+#' @return A data frame or tibble with at most 1 000 rows when
+#'   \code{slice_1000 = TRUE}, otherwise the original \code{tbl}.
+#'
+#' @keywords internal
+sliceFunction <- function(tbl, slice_1000, memory_manage = 0L) {
   if (slice_1000==TRUE) {
     tbl %>% slice(1:1000)
   } else {
     tbl
   }
 }
+#' @rdname sliceFunction
+#' @keywords internal
+sliceFuction <- sliceFunction
 
 # passes thru multiple grouping variables. right now I'm using groupby, but this could be replaced by expand grid.
 # it does allow for multiple groups
+#' Group a Table by One or More Variables
+#'
+#' A flexible wrapper around \code{dplyr::group_by()} that accepts a vector of
+#' grouping variable names.  When no valid grouping variables are provided the
+#' table is returned ungrouped.
+#'
+#' @param tbl A data frame or tibble.
+#' @param grouping_vars A character vector of column names to group by, or
+#'   \code{NA}/\code{NULL}/\code{0} to skip grouping.
+#' @param verbose Logical.  If \code{TRUE}, messages describing the grouping
+#'   operation are emitted.  Default is \code{FALSE}.
+#' @param memory_manage Integer memory-management flag (currently unused but
+#'   kept for API consistency).  Default is \code{0L}.
+#'
+#' @return A grouped (or ungrouped) data frame / tibble.
+#'
+#' @keywords internal
 group_byFunction <- function(tbl, grouping_vars, verbose = FALSE, memory_manage = 0L) {
   if (length(grouping_vars) > 1) {
     if (verbose) {
@@ -87,6 +153,56 @@ group_byFunction <- function(tbl, grouping_vars, verbose = FALSE, memory_manage 
 
 
 # this function lets you implement other data cleaning
+#' Apply Pre-Defined Mutation (Data Transformation) Steps
+#'
+#' Adds derived grouping columns to \code{tbl} based on the value of
+#' \code{mutate_vars}.  Each value of \code{mutate_vars} maps to a specific
+#' set of column-creation operations (e.g. gender groupings, linkage type,
+#' birth-cohort groupings, case-control status).  If \code{mutate_vars} is
+#' \code{NULL}, \code{NA}, or \code{0} the table is returned unchanged.
+#'
+#' @param tbl A data frame or tibble containing the kinship-pair data.
+#' @param mutate_vars A single string (or \code{NULL}/\code{NA}/\code{0})
+#'   naming the transformation to apply.  Supported values include:
+#'   \describe{
+#'     \item{\code{"gender_groupings"}}{Add a \code{gender_groupings} column
+#'       coding same-sex and opposite-sex pairs.}
+#'     \item{\code{"linkagetype"}}{Add columns for shared maternal/paternal IDs
+#'       and a composite \code{linkagetype} variable.}
+#'     \item{\code{"linkage_any"}}{Like \code{"linkagetype"} but codes any
+#'       shared lineage as the same value.}
+#'     \item{\code{"same_patID"}}{Add a \code{same_patID} indicator.}
+#'     \item{\code{"same_matID"}}{Add a \code{same_matID} indicator.}
+#'     \item{\code{"gender_groupings_linkagetype"} / \code{"gender_linkagetype"}}{
+#'       Combine linkage type and gender groupings.}
+#'     \item{\code{"casecontrol_groupings"}}{Add a case/control grouping column.}
+#'     \item{\code{"cohort_groupings_19"}}{Add birth-cohort groupings (18th vs
+#'       19th century).}
+#'     \item{\code{"cohort_groupings_19flat"}}{Flattened 18th/19th-century cohort
+#'       groupings.}
+#'     \item{\code{"cohort_groupings_match"}}{Indicator for pairs in the same
+#'       birth century.}
+#'     \item{\code{"cohort_groupings"}}{Full century-level cohort groupings.}
+#'     \item{\code{"gender_cohort_groupings_19"}}{Gender + 19th-century cohort
+#'       groupings.}
+#'     \item{\code{"gender_cohort_groupings"}}{Gender + full cohort groupings.}
+#'     \item{\code{"cohort_linkagetype_19"}}{Linkage type + 19th-century cohort.}
+#'     \item{\code{"cohort_linkagetype"}}{Linkage type + full cohort groupings.}
+#'     \item{\code{"cohort_gender_linkagetype_19"}}{Linkage + cohort + gender
+#'       (19th-century).}
+#'     \item{\code{"cohort_gender_linkagetype"}}{Linkage + cohort + gender (full).}
+#'     \item{Any other character string}{Evaluated as a \code{dplyr::mutate()}
+#'       expression directly.}
+#'   }
+#' @param verbose Logical.  If \code{TRUE}, informational messages are printed.
+#'   Default is \code{FALSE}.
+#' @param memory_manage Integer memory-management flag controlling whether
+#'   intermediate garbage collection is performed and whether certain columns are
+#'   dropped to conserve RAM.  Default is \code{0L}.
+#'
+#' @return A data frame or tibble with the requested derived columns added.
+#'
+#' @keywords internal
 mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0L ) {
   # subfunctions
 
@@ -570,6 +686,56 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
 # creates the group bys
 ## I tried A TON OF THINGS, but the most predictably behaving version...
 ## was to create a large string via mapply
+#' Summarize Outcomes Across Kinship Bins
+#'
+#' Builds and evaluates a \code{dplyr::summarize()} call that computes
+#' within-bin statistics for each outcome variable using the specified
+#' estimation function.  The summary always includes pair counts and
+#' relatedness-bin metadata; per-outcome columns are appended by constructing
+#' an R expression string via \code{mapply()} and evaluating it.
+#'
+#' @param tbl A (grouped or ungrouped) data frame containing the kinship-pair
+#'   data for a single bin.
+#' @param outcome_k1 Character vector of outcome variable names for the first
+#'   member of each pair (the \code{_k1} side).  Must be the same length as
+#'   \code{outcome_k2} and \code{outcome_functions}.
+#' @param outcome_k2 Character vector of outcome variable names for the second
+#'   member of each pair (the \code{_k2} side).
+#' @param outcome_functions Character vector naming the statistical function to
+#'   apply to each outcome pair.  Supported values include
+#'   \code{"meanFunction"}, \code{"sdFunction"}, \code{"polychorFunction"},
+#'   \code{"ml_polychorFunction"}, \code{"relriskFunction"},
+#'   \code{"phi_both"}, \code{"phi_none"}, \code{"phi_one"},
+#'   \code{"phi_k1_yes_k2_no"}, \code{"phi_k1_no_k2_yes"},
+#'   \code{"phi_est"}, \code{"phi_se"}, \code{"phi_LL"}, \code{"phi_UL"},
+#'   \code{"phi_ci"}, \code{"rr_exposed_cases"}, \code{"rr_unexposed_noncases"},
+#'   \code{"rr_discordant"}, \code{"rr_exposed_noncases"},
+#'   \code{"rr_unexposed_cases"}, \code{"rr_risk_exposed"},
+#'   \code{"rr_risk_unexposed"}, \code{"rr_est"}, and any other function
+#'   name that takes a single vector argument.
+#' @param mitj Value of the mitochondrial-DNA relatedness flag for the current
+#'   iteration (stored in the output as \code{mtdna}).
+#' @param cnuk Value of the common-nuclear-environment flag for the current
+#'   iteration (stored in the output as \code{cnu}).
+#' @param range_maxi Upper bound of the additive-relatedness bin.
+#' @param range_mini Lower bound of the additive-relatedness bin.
+#' @param verbose Logical.  If \code{TRUE}, the constructed \code{summarize}
+#'   call string is printed via \code{message()}.  Default is \code{FALSE}.
+#' @param memory_manage Integer memory-management flag.  Values \code{> 1}
+#'   suppress empirical \code{addRel} statistics to save RAM.  Default is
+#'   \code{0L}.
+#' @param skinny_summarize_call Logical.  If \code{TRUE} (default), the
+#'   summary omits empirical \code{addRel} distribution statistics
+#'   (\code{min}, \code{mean}, \code{median}, \code{max}) and the unique-N
+#'   count.  Set to \code{FALSE} for a richer output.
+#' @param SEN Logical.  If \code{TRUE}, an extended set of summary statistics
+#'   (including unique individual counts and average dyads per ID) is computed.
+#'   Default is \code{FALSE}.
+#'
+#' @return A one-row (or one-row-per-group) tibble containing the summary
+#'   statistics for the current bin.
+#'
+#' @keywords internal
 summarizerFunction <- function(tbl,
                                outcome_k1,
                                outcome_k2, outcome_functions, mitj, cnuk,
@@ -779,25 +945,97 @@ summarizerFunction <- function(tbl,
 }
 
 
+#' Compute the Mean, Ignoring Missing Values
+#'
+#' A thin wrapper around \code{base::mean()} with \code{na.rm = TRUE}.
+#'
+#' @param x A numeric vector.
+#'
+#' @return A single numeric value: the arithmetic mean of the non-missing
+#'   elements of \code{x}.
+#'
+#' @keywords internal
 meanFunction <- function(x) {
   mean(x, na.rm = TRUE)
 }
 
 
+#' Compute the Standard Deviation, Ignoring Missing Values
+#'
+#' A thin wrapper around \code{stats::sd()} with \code{na.rm = TRUE}.
+#'
+#' @param x A numeric vector.
+#'
+#' @return A single numeric value: the sample standard deviation of the
+#'   non-missing elements of \code{x}.
+#'
+#' @keywords internal
 sdFunction <- function(x) {
   sd(x, na.rm = TRUE)
 }
 
+#' Compute the 25th Percentile, Ignoring Missing Values
+#'
+#' A thin wrapper around \code{stats::quantile()} that returns the 25th
+#' percentile (first quartile) with \code{na.rm = TRUE}.
+#'
+#' @param x A numeric vector.
+#'
+#' @return A single numeric value: the 25th percentile of \code{x}.
+#'
+#' @keywords internal
 q25Function <- function(x) {
   quantile(x, na.rm = TRUE,probs = .25)
 }
+
+#' Compute the 75th Percentile, Ignoring Missing Values
+#'
+#' A thin wrapper around \code{stats::quantile()} that returns the 75th
+#' percentile (third quartile) with \code{na.rm = TRUE}.
+#'
+#' @param x A numeric vector.
+#'
+#' @return A single numeric value: the 75th percentile of \code{x}.
+#'
+#' @keywords internal
 q75Function <- function(x) {
   quantile(x, na.rm = TRUE,probs = .75)
 }
+
+#' Compute the Median (50th Percentile), Ignoring Missing Values
+#'
+#' A thin wrapper around \code{stats::quantile()} that returns the 50th
+#' percentile (median) with \code{na.rm = TRUE}.
+#'
+#' @param x A numeric vector.
+#'
+#' @return A single numeric value: the median of \code{x}.
+#'
+#' @keywords internal
 q50Function <- function(x) {
   quantile(x, na.rm = TRUE,probs = .5)
 }
 
+#' Compute the Relative Risk for a Binary Outcome Pair
+#'
+#' Constructs a 2 \eqn{\times} 2 contingency table from two binary vectors
+#' and estimates the relative risk (and confidence interval) using
+#' \code{DescTools::RelRisk()}.
+#'
+#' @param k1 A binary numeric (or integer) vector for the first kin member
+#'   (values expected to be 0 or 1).
+#' @param k2 A binary numeric (or integer) vector for the second kin member,
+#'   the same length as \code{k1}.
+#' @param conf.level Numeric confidence level for the interval.  Default is
+#'   \code{0.95}.
+#' @param method Character string passed to \code{DescTools::RelRisk()}.
+#'   Default is \code{"score"}.
+#'
+#' @return A named numeric vector with the relative risk estimate, lower
+#'   confidence bound, and upper confidence bound (as returned by
+#'   \code{DescTools::RelRisk()}).
+#'
+#' @keywords internal
 relriskFunction <- function(k1, k2, conf.level = 0.95, method = "score") {
   rr_tbl <- table(
     factor(k1, levels = c(1, 0)),
@@ -812,12 +1050,47 @@ relriskFunction <- function(k1, k2, conf.level = 0.95, method = "score") {
 }
 
 
+#' Build an Input File Path for a Kinship Bin
+#'
+#' Assembles the expected file path for a CSV file that stores relatedness-bin
+#' data, following the naming convention used throughout this package.
+#'
+#' @param data_path Character string giving the root data directory (may be an
+#'   empty string \code{""} if the path is relative to the working directory).
+#' @param df_foldername Character string: name of the dataset/folder.
+#' @param binwidth_cha Character string representation of the bin width (e.g.
+#'   \code{"10"} for a 10 \% bin).
+#' @param mit Value of the mitochondrial-DNA relatedness flag (\code{0} or
+#'   \code{1}).
+#' @param range_min Lower bound of the additive-relatedness range for this bin.
+#' @param range_max Upper bound of the additive-relatedness range for this bin.
+#'
+#' @return A single character string giving the full path to the expected input
+#'   CSV file.
+#'
+#' @keywords internal
 make_input_file <- function(data_path,df_foldername,binwidth_cha,mit,range_min,range_max){
   paste0(data_path,"data/", df_foldername, "_", binwidth_cha, "/df_mt", mit, "_r", range_min, "-r", range_max, ".csv")
 
 }
 
 
+#' Read a Kinship Bin CSV File
+#'
+#' Reads a single kinship-bin CSV file using \code{data.table::fread()},
+#' optionally dropping specified columns, and returns the result as a tibble.
+#' Errors from \code{fread()} are caught and \code{NA} is returned instead.
+#'
+#' @param input_file Character string: full path to the CSV file to read.
+#' @param drop_variables Character vector of column names to drop when reading
+#'   the file.  Default is \code{c("mitRel")}.
+#' @param verbose Logical.  If \code{TRUE}, a message reporting the number of
+#'   rows read is emitted.  Default is \code{FALSE}.
+#'
+#' @return A data frame (tibble-compatible) with the contents of
+#'   \code{input_file}, or \code{NA} if reading fails.
+#'
+#' @keywords internal
 read_kinbin <- function(input_file, drop_variables = c("mitRel"), verbose = FALSE) {
   dataRelatedPair_merge <- try_NA(fread(input_file,
                                         header = TRUE,
