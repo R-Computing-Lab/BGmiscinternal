@@ -481,14 +481,14 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                 if (length(grouping_loop) == 1 && grouping_loop == 1) {
                   remove(dataRelatedPair_merge)
                   gc()
-                  dataRelatedPair_merge <- readr::readr::read_rds("dataRelatedPair_merge.RDS") %>%
+                  dataRelatedPair_merge <- readr::read_rds("dataRelatedPair_merge.RDS") %>%
                     tidyft::setDT() %>%
                     dplyr::filter(.data$cnuRel == cnuk)
                   gc()
                 } else {
                   remove(dataRelatedPair_merge)
                   gc()
-                  dataRelatedPair_merge <- readr::readr::read_rds("dataRelatedPair_merge.RDS") %>%
+                  dataRelatedPair_merge <- readr::read_rds("dataRelatedPair_merge.RDS") %>%
                     tidyft::setDT(dataRelatedPair_merge) %>%
                     dplyr::filter(.data[[grouping_vars]] == grouping_loop[g], .data$cnuRel == cnuk)
                   gc()
