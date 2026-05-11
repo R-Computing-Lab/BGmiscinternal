@@ -1,3 +1,4 @@
+#' @importFrom utils globalVariables
 #' @keywords internal
 "_PACKAGE"
 

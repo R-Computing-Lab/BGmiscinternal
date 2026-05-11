@@ -38,7 +38,7 @@ options(scipen = 10, digits = 11)
 #' @return A tibble with integer columns wherever conversion was possible.
 #'
 #' @importFrom magrittr %>%
-#' @importFrom dplyr mutate across
+#' @importFrom dplyr mutate across if_else
 #' @importFrom tidyselect where
 #' @importFrom data.table ":=" as.data.table
 #' @importFrom tibble as_tibble
@@ -46,10 +46,8 @@ options(scipen = 10, digits = 11)
 convert_to_integer <- function(tbl,memory_manage = 0L){
   if(memory_manage<1){
     tbl %>%
-      dplyr::mutate(across(where(is.numeric), ~ if_else(. == floor(.), as.integer(.),.)))
-    #   require(varhandle)
+      dplyr::mutate(dplyr::across(tidyselect::where(is.numeric), ~ dplyr::if_else(. == floor(.), as.integer(.), .)))
   }else{
-    require(data.table)
     # convert to datatable
     tbl <- data.table::as.data.table(tbl)
     # convert numeric to integer where possible
@@ -61,7 +59,7 @@ convert_to_integer <- function(tbl,memory_manage = 0L){
         }
       }
     }
-    as_tibble(tbl)
+    tibble::as_tibble(tbl)
   }
 }
 
@@ -99,7 +97,7 @@ try_NA = function(expr){
 #' @keywords internal
 sliceFunction <- function(tbl, slice_1000, memory_manage = 0L) {
   if (slice_1000==TRUE) {
-    tbl %>% slice(1:1000)
+    tbl %>% dplyr::slice(1:1000)
   } else {
     tbl
   }
@@ -254,7 +252,7 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               male_k1 == 0 & male_k2 == 1 ~ 1L,
               TRUE ~ NA_integer_
             )
-          )   %>% select(-c(male_k2))
+          )   %>% dplyr::select(-c(male_k2))
       } else{
         tbl %>% # match
           dplyr::mutate(
@@ -287,14 +285,14 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               patID_k1 == patID_k2 ~ 1L,
               patID_k1 != patID_k2 ~ 0L,
               TRUE ~ NA_integer_
-            )) %>% select(-c(patID_k1,patID_k2,matID_k1,matID_k2)) %>%
+            )) %>% dplyr::select(-c(patID_k1,patID_k2,matID_k1,matID_k2)) %>%
           dplyr::mutate(  linkagetype = dplyr::case_when(
             same_matID == 1 & same_patID == 1 ~ 11L,
             same_matID == 0 & same_patID == 0 ~ 00L,
             same_matID == 1 & same_patID == 0 ~ 10L,
             same_matID == 0 & same_patID == 1 ~ 01L,
             TRUE ~ NA_integer_
-          )) %>% select(-c(same_matID, same_patID))
+          )) %>% dplyr::select(-c(same_matID, same_patID))
       } else{
         tbl %>% # match
           dplyr::mutate(
@@ -337,7 +335,7 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               patID_k1 == patID_k2 ~ 1L,
               patID_k1 != patID_k2 ~ 0L,
               TRUE ~ NA_integer_
-            )) %>% select(-c(patID_k1,patID_k2,matID_k1,matID_k2))
+            )) %>% dplyr::select(-c(patID_k1,patID_k2,matID_k1,matID_k2))
       } else{
         tbl %>% # match
           dplyr::mutate(
@@ -366,7 +364,7 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               matID_k1 == matID_k2 ~ 1L,
               matID_k1 != matID_k2 ~ 0L,
               TRUE ~ NA_integer_
-            )) %>% select(-c(patID_k1,patID_k2,matID_k1,matID_k2))
+            )) %>% dplyr::select(-c(patID_k1,patID_k2,matID_k1,matID_k2))
       } else{
         tbl %>% # match
           dplyr::mutate(
@@ -396,14 +394,14 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               patID_k1 == patID_k2 ~ 1L,
               patID_k1 != patID_k2 ~ 0L,
               TRUE ~ NA_integer_
-            )) %>% select(-c(patID_k1,patID_k2,matID_k1,matID_k2)) %>%
+            )) %>% dplyr::select(-c(patID_k1,patID_k2,matID_k1,matID_k2)) %>%
           dplyr::mutate(  linkagetype = dplyr::case_when(
             same_matID == 1 & same_patID == 1 ~ 11L,
             same_matID == 0 & same_patID == 0 ~ 00L,
             same_matID == 1 & same_patID == 0 ~ 11L,
             same_matID == 0 & same_patID == 1 ~ 11L,
             TRUE ~ NA_integer_
-          )) %>% select(-c(same_matID, same_patID))
+          )) %>% dplyr::select(-c(same_matID, same_patID))
       } else{
         tbl %>% # match
           dplyr::mutate(
@@ -445,12 +443,12 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               BYr_k2 < 1900 ~ 18L,
               BYr_k2 >= 1900 ~ 19L,
               TRUE ~ NA_integer_
-            )) %>% select(-c(BYr_k1,BYr_k2)) %>%
+            )) %>% dplyr::select(-c(BYr_k1,BYr_k2)) %>%
           dplyr::mutate(
             cohort_groupings = dplyr::case_when(cohort_k1 < cohort_k2 ~ as.integer(cohort_k1*100+cohort_k2),
                                          cohort_k1 >= cohort_k2 ~ as.integer(cohort_k2*100+cohort_k1),
                                          TRUE ~ NA_integer_)
-          ) %>% select(-c(cohort_k1,cohort_k2))
+          ) %>% dplyr::select(-c(cohort_k1,cohort_k2))
       }else{ tbl %>% # match
           # birthcohort
           dplyr::mutate(
@@ -488,12 +486,12 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               BYr_k2 < 1900 ~ 18L,
               BYr_k2 >= 1900 ~ 19L,
               TRUE ~ NA_integer_
-            )) %>% select(-c(BYr_k1,BYr_k2)) %>%
+            )) %>% dplyr::select(-c(BYr_k1,BYr_k2)) %>%
           dplyr::mutate(
             cohort_groupings = dplyr::case_when(cohort_k1 == 19 & cohort_k2 == 19 ~ as.integer(1919),
                                          cohort_k1 < 19 | cohort_k2 <  19 ~ as.integer(1818),
                                          TRUE ~ NA_integer_)
-          ) %>% select(-c(cohort_k1,cohort_k2))
+          ) %>% dplyr::select(-c(cohort_k1,cohort_k2))
       }else{ tbl %>% # match
           # birthcohort
           dplyr::mutate(
@@ -537,12 +535,12 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               BYr_k2 >= 1900 & BYr_k2 < 2000 ~ 19L,
               BYr_k2 >= 2000 & BYr_k2 < 2100 ~ 20L,
               TRUE ~ NA_integer_
-            )) %>% select(-c(BYr_k1,BYr_k2)) %>%
+            )) %>% dplyr::select(-c(BYr_k1,BYr_k2)) %>%
           dplyr::mutate(
             cohort_groupings = dplyr::case_when(cohort_k1 == cohort_k2 ~ as.integer(1),
                                          cohort_k1 != cohort_k2 ~ as.integer(0),
                                          TRUE ~ NA_integer_)
-          ) %>% select(-c(cohort_k1,cohort_k2))
+          ) %>% dplyr::select(-c(cohort_k1,cohort_k2))
       }else{ tbl %>% # match
           # birthcohort
           dplyr::mutate(
@@ -594,12 +592,12 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               BYr_k2 >= 1900 & BYr_k2 < 2000 ~ 19L,
               BYr_k2 >= 2000 & BYr_k2 < 2100 ~ 20L,
               TRUE ~ NA_integer_
-            )) %>% select(-c(BYr_k1,BYr_k2)) %>%
+            )) %>% dplyr::select(-c(BYr_k1,BYr_k2)) %>%
           dplyr::mutate(
             cohort_groupings = dplyr::case_when(cohort_k1 < cohort_k2 ~ as.integer(cohort_k1*100+cohort_k2),
                                          cohort_k1 >= cohort_k2 ~ as.integer(cohort_k2*100+cohort_k1),
                                          TRUE ~ NA_integer_)
-          ) %>% select(-c(cohort_k1,cohort_k2))
+          ) %>% dplyr::select(-c(cohort_k1,cohort_k2))
       }else{ tbl %>% # match
           # birthcohort
           dplyr::mutate(

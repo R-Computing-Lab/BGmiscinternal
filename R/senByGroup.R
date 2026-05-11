@@ -244,11 +244,11 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
 
             if (all(c("age_k1", "age_k2") %in% names(dataRelatedPair_merge))) {
               dataRelatedPair_merge <- dataRelatedPair_merge %>%
-                drop_na(age_k1, age_k2) %>%
+                tidyr::drop_na(age_k1, age_k2) %>%
                 dplyr::filter(age_k1 >= min_age | age_k2 >= min_age)
             } else if ("age" %in% names(dataRelatedPair_merge)) {
               dataRelatedPair_merge <- dataRelatedPair_merge %>%
-                drop_na(age) %>%
+                tidyr::drop_na(age) %>%
                 dplyr::filter(age >= min_age)
             }
             if (verbose == TRUE) {
@@ -313,7 +313,7 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
             }
 
 
-            dataRelatedPair_merge <- rbindlist(
+            dataRelatedPair_merge <- data.table::rbindlist(
               list(
                 dataRelatedPair_merge,
                 dataRelatedPair_merge[, ..dxlist]
@@ -376,7 +376,7 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
               message(paste0("Skipped writing Temp to disk. Temp was NA"), length(temp))
             }
           } else {
-            fwrite(temp,
+            data.table::fwrite(temp,
                    file = file_path_txt, sep = ",",
                    append = TRUE, row.names = FALSE, col.names = FALSE
             )
@@ -395,11 +395,11 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
     } # end add
 
     # get the full file to add variable names
-    aim1_cors <- read.csv(file_path_txt, header = FALSE)
+    aim1_cors <- utils::read.csv(file_path_txt, header = FALSE)
 
 
     names(aim1_cors) <- file_names
-    fwrite(aim1_cors,
+    data.table::fwrite(aim1_cors,
            file = file_path_txt, sep = ",",
            append = FALSE, row.names = FALSE, col.names = TRUE
     )
@@ -504,19 +504,19 @@ estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
     icc_model <- lme4::lmer(outcome ~ 1 + (1 | ID), data = df_long)
 
     # Extract variance components
-    var_components <- as.data.frame(VarCorr(icc_model))
+    var_components <- as.data.frame(lme4::VarCorr(icc_model))
     sigma_b <- var_components$vcov[1]
-    sigma_e <- attr(VarCorr(icc_model), "sc")^2
+    sigma_e <- attr(lme4::VarCorr(icc_model), "sc")^2
 
     icc <- sigma_b / (sigma_b + sigma_e)
     return(icc)
 
   } else if (method=="psych"){
-    library(psych)
+    library(psych) # nolint: undesirable_function_linter
     icc_data <- df_long %>%
-      group_by(ID) %>%
-      dplyr::mutate(obs_num = row_number()) %>%
-      ungroup() %>%
+      dplyr::group_by(ID) %>%
+      dplyr::mutate(obs_num = dplyr::row_number()) %>%
+      dplyr::ungroup() %>%
       tidyr::pivot_wider(names_from = obs_num, values_from = outcome)
 
     # compute ICC (only works if enough repeated measures per person)
@@ -532,8 +532,8 @@ estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
       dplyr::filter(dplyr::n() > 1) %>%
       dplyr::ungroup()
 
-    model <- lme4::glmer(outcome ~ 1 + (1 | ID), data = df_long, family = binomial)
-    vc <- as.data.frame(VarCorr(model))$vcov[1]
+    model <- lme4::glmer(outcome ~ 1 + (1 | ID), data = df_long, family = stats::binomial())
+    vc <- as.data.frame(lme4::VarCorr(model))$vcov[1]
     icc <- vc / (vc + (pi^2 / 3))  # Latent scale variance for logistic link
     return(icc)
   }
