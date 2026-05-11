@@ -168,14 +168,14 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
 
     addRel_maxs <- c(
       1.5, sort(c(addRel_real_maxs, addRel_maxs_temp),
-                decreasing = TRUE
+        decreasing = TRUE
       ),
       addRel_mins_temp[length(addRel_mins_temp)]
     )
     addRel_mins <- c(
       addRel_maxs_temp[1],
       sort(c(addRel_real_mins, addRel_mins_temp),
-           decreasing = TRUE
+        decreasing = TRUE
       ), 0
     )
 
@@ -261,7 +261,6 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
           }
 
 
-
           # possible optimization
           dataRelatedPair_merge <- dataRelatedPair_merge %>%
             dplyr::mutate(dplyr::across(where(is.numeric), round, 3))
@@ -316,7 +315,8 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
             dataRelatedPair_merge <- data.table::rbindlist(
               list(
                 dataRelatedPair_merge,
-                dataRelatedPair_merge[, .SD, .SDcols = dxlist]
+                #   dataRelatedPair_merge[, .SD, .SDcols = dxlist]
+                dataRelatedPair_merge[, ..dxlist]
               ),
               use.names = FALSE
             )
@@ -347,22 +347,22 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
             mitj <- mit[j]
 
             temp <- try_NA(dataRelatedPair_merge %>% dplyr::filter(.data$cnuRel == cnuk) %>%
-                             sliceFunction(slice_1000 = slice_1000, memory_manage = memory_manage) %>%
-                             mutateFunction(mutate_vars = mutate_vars, verbose = verbose, memory_manage = memory_manage) %>%
-                             #     group_by(ID1) %>% dplyr::mutate(
-                             #     unique_ID2s = dplyr::n_distinct(ID2)
-                             #      ) %>% ungroup() %>% group_by(ID2) %>% dplyr::mutate(
-                             #        unique_ID1s = dplyr::n_distinct(ID1)
-                             #      ) %>% ungroup()  %>%
-                             group_byFunction(grouping_vars, verbose = verbose, memory_manage = memory_manage) %>%
-                             summarizerFunction(outcome_vars, outcome_functions,
-                                                cnuk = cnuk, mitj = mitj,
-                                                range_maxi = range_max,
-                                                range_mini = range_min,
-                                                verbose = verbose, memory_manage = memory_manage,
-                                                skinny_summarize_call = skinny_summarize_call,
-                                                SEN=TRUE
-                             ))
+              sliceFunction(slice_1000 = slice_1000, memory_manage = memory_manage) %>%
+              mutateFunction(mutate_vars = mutate_vars, verbose = verbose, memory_manage = memory_manage) %>%
+              #     group_by(ID1) %>% dplyr::mutate(
+              #     unique_ID2s = dplyr::n_distinct(ID2)
+              #      ) %>% ungroup() %>% group_by(ID2) %>% dplyr::mutate(
+              #        unique_ID1s = dplyr::n_distinct(ID1)
+              #      ) %>% ungroup()  %>%
+              group_byFunction(grouping_vars, verbose = verbose, memory_manage = memory_manage) %>%
+              summarizerFunction(outcome_vars, outcome_functions,
+                cnuk = cnuk, mitj = mitj,
+                range_maxi = range_max,
+                range_mini = range_min,
+                verbose = verbose, memory_manage = memory_manage,
+                skinny_summarize_call = skinny_summarize_call,
+                SEN = TRUE
+              ))
             # %>%
             # suppressWarnings()
             gc()
@@ -377,8 +377,8 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
             }
           } else {
             data.table::fwrite(temp,
-                   file = file_path_txt, sep = ",",
-                   append = TRUE, row.names = FALSE, col.names = FALSE
+              file = file_path_txt, sep = ",",
+              append = TRUE, row.names = FALSE, col.names = FALSE
             )
 
             # temp get names
@@ -400,15 +400,21 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
 
     names(aim1_cors) <- file_names
     data.table::fwrite(aim1_cors,
-           file = file_path_txt, sep = ",",
-           append = FALSE, row.names = FALSE, col.names = TRUE
+      file = file_path_txt, sep = ",",
+      append = FALSE, row.names = FALSE, col.names = TRUE
     )
   } # end bin
 
   # clean up after
-  remove(dataRelatedPair_merge)
-  remove(temp)
-  remove(aim1_cors)
+  if (exists("dataRelatedPair_merge")) {
+    remove(dataRelatedPair_merge)
+  }
+  if (exists("temp")) {
+    remove(temp)
+  }
+  if (exists("aim1_cors")) {
+    remove(aim1_cors)
+  }
   # note: these kin are double entered
 }
 # NOTE: The complete implementation of estimate_icc_latent_from_dyadic follows below.
@@ -449,9 +455,11 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
 #' @importFrom lme4 VarCorr
 #' @export
 estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
-                                            method = c("latent",
-                                                       "mean",
-                                                       "lmer","glmer"),
+                                            method = c(
+                                              "latent",
+                                              "mean",
+                                              "lmer", "glmer"
+                                            ),
                                             binary = TRUE) {
   method <- match.arg(method)
 
@@ -475,7 +483,6 @@ estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
 
     icc <- between_var / total_var
     return(icc)
-
   } else if (method == "latent") {
     # For binary: ICC on logistic latent scale; for continuous: standard ICC
     df_long <- df_long %>%
@@ -498,9 +505,7 @@ estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
 
     icc <- between_var / total_var
     return(icc)
-
-  } else if (method=="lmer"){
-
+  } else if (method == "lmer") {
     icc_model <- lme4::lmer(stats::as.formula("outcome ~ 1 + (1 | ID)"), data = df_long)
 
     # Extract variance components
@@ -510,8 +515,7 @@ estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
 
     icc <- sigma_b / (sigma_b + sigma_e)
     return(icc)
-
-  } else if (method=="psych"){
+  } else if (method == "psych") {
     library(psych) # nolint: undesirable_function_linter
     icc_data <- df_long %>%
       dplyr::group_by(.data$ID) %>%
@@ -520,10 +524,10 @@ estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
       tidyr::pivot_wider(names_from = "obs_num", values_from = "outcome")
 
     # compute ICC (only works if enough repeated measures per person)
-    icc <- psych::ICC(icc_data[,-1])  # drop ID column
+    icc <- psych::ICC(icc_data[, -1]) # drop ID column
     return(icc)
   } else if (method == "glmer") {
-    if (binary==FALSE) {
+    if (binary == FALSE) {
       stop("The 'glmer' method is only valid for binary outcomes (binary = TRUE).")
     }
 
@@ -534,7 +538,7 @@ estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
 
     model <- lme4::glmer(stats::as.formula("outcome ~ 1 + (1 | ID)"), data = df_long, family = stats::binomial())
     vc <- as.data.frame(lme4::VarCorr(model))$vcov[1]
-    icc <- vc / (vc + (pi^2 / 3))  # Latent scale variance for logistic link
+    icc <- vc / (vc + (pi^2 / 3)) # Latent scale variance for logistic link
     return(icc)
   }
 }

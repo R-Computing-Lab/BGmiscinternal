@@ -43,19 +43,19 @@ options(scipen = 10, digits = 11)
 #' @importFrom data.table ":=" as.data.table
 #' @importFrom tibble as_tibble
 #' @keywords internal
-convert_to_integer <- function(tbl,memory_manage = 0L){
-  if(memory_manage<1){
+convert_to_integer <- function(tbl, memory_manage = 0L) {
+  if (memory_manage < 1) {
     tbl %>%
       dplyr::mutate(dplyr::across(tidyselect::where(is.numeric), ~ dplyr::if_else(. == floor(.), as.integer(.), .)))
-  }else{
+  } else {
     # convert to datatable
     tbl <- data.table::as.data.table(tbl)
     # convert numeric to integer where possible
-    for(col in names(tbl)) {
-      if(is.numeric(tbl[[col]])){
+    for (col in names(tbl)) {
+      if (is.numeric(tbl[[col]])) {
         # if intger the same for both, then convert in place
-        if(mean(floor(unique(tbl[[col]]))==unique(tbl[[col]]),na.rm=TRUE)){
-          tbl[,(col) := as.integer(tbl[[col]])]
+        if (mean(floor(unique(tbl[[col]])) == unique(tbl[[col]]), na.rm = TRUE)) {
+          tbl[, (col) := as.integer(tbl[[col]])]
         }
       }
     }
@@ -73,8 +73,8 @@ convert_to_integer <- function(tbl,memory_manage = 0L){
 #' @return The result of \code{expr}, or \code{NA} if an error occurs.
 #'
 #' @keywords internal
-try_NA = function(expr){
-  tryCatch(expr,error=function(err) NA)
+try_NA <- function(expr) {
+  tryCatch(expr, error = function(err) NA)
 }
 
 #' Optionally Slice a Table to the First 1 000 Rows
@@ -96,7 +96,7 @@ try_NA = function(expr){
 #' @importFrom dplyr slice
 #' @keywords internal
 sliceFunction <- function(tbl, slice_1000, memory_manage = 0L) {
-  if (slice_1000==TRUE) {
+  if (slice_1000 == TRUE) {
     tbl %>% dplyr::slice(1:1000)
   } else {
     tbl
@@ -157,8 +157,6 @@ group_byFunction <- function(tbl, grouping_vars, verbose = FALSE, memory_manage 
 }
 
 
-
-
 # this function lets you implement other data cleaning
 #' Apply Pre-Defined Mutation (Data Transformation) Steps
 #'
@@ -212,15 +210,15 @@ group_byFunction <- function(tbl, grouping_vars, verbose = FALSE, memory_manage 
 #' @importFrom magrittr %>%
 #' @importFrom dplyr select
 #' @keywords internal
-mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0L ) {
+mutateFunction <- function(tbl, mutate_vars, verbose = FALSE, memory_manage = 0L) {
   # subfunctions
 
   ## case control
 
-  mutateCaseControl <- function(tbl, memory_manage=0L){
-    if ("casecontrol_groupings" %in% names(tbl)){
+  mutateCaseControl <- function(tbl, memory_manage = 0L) {
+    if ("casecontrol_groupings" %in% names(tbl)) {
       tbl # skip in outcome vare already present
-    } else{
+    } else {
       if (memory_manage > 0L) {
         gc()
       }
@@ -237,10 +235,10 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
 
 
   ## gender
-  mutateGender <- function(tbl, memory_manage=0L){
-    if ("gender_groupings" %in% names(tbl)){
+  mutateGender <- function(tbl, memory_manage = 0L) {
+    if ("gender_groupings" %in% names(tbl)) {
       tbl # skip in outcome vare already present
-    } else{
+    } else {
       if (memory_manage > 0L) {
         gc()
         tbl %>% # match
@@ -252,8 +250,8 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               .data$male_k1 == 0 & .data$male_k2 == 1 ~ 1L,
               TRUE ~ NA_integer_
             )
-          )   %>% dplyr::select(-"male_k2")
-      } else{
+          ) %>% dplyr::select(-"male_k2")
+      } else {
         tbl %>% # match
           dplyr::mutate(
             gender_groupings = dplyr::case_when(
@@ -268,10 +266,10 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
     }
   }
   ## linkage type
-  mutateLinkage <- function(tbl, memory_manage=0L){
-    if ("linkagetype" %in% names(tbl)){
+  mutateLinkage <- function(tbl, memory_manage = 0L) {
+    if ("linkagetype" %in% names(tbl)) {
       tbl # skip in outcome vare already present
-    } else{
+    } else {
       if (memory_manage > 0L) {
         gc()
         tbl %>% # match
@@ -285,15 +283,18 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               .data$patID_k1 == .data$patID_k2 ~ 1L,
               .data$patID_k1 != .data$patID_k2 ~ 0L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c("patID_k1","patID_k2","matID_k1","matID_k2")) %>%
-          dplyr::mutate(  linkagetype = dplyr::case_when(
+            )
+          ) %>%
+          dplyr::select(-c("patID_k1", "patID_k2", "matID_k1", "matID_k2")) %>%
+          dplyr::mutate(linkagetype = dplyr::case_when(
             .data$same_matID == 1 & .data$same_patID == 1 ~ 11L,
             .data$same_matID == 0 & .data$same_patID == 0 ~ 00L,
             .data$same_matID == 1 & .data$same_patID == 0 ~ 10L,
             .data$same_matID == 0 & .data$same_patID == 1 ~ 01L,
             TRUE ~ NA_integer_
-          )) %>% dplyr::select(-c("same_matID", "same_patID"))
-      } else{
+          )) %>%
+          dplyr::select(-c("same_matID", "same_patID"))
+      } else {
         tbl %>% # match
           dplyr::mutate(
             same_matID = dplyr::case_when(
@@ -318,10 +319,10 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
     }
   }
 
-  mutateLinkage_same_patID <- function(tbl, memory_manage=0L){
-    if ("same_patID" %in% names(tbl)){
+  mutateLinkage_same_patID <- function(tbl, memory_manage = 0L) {
+    if ("same_patID" %in% names(tbl)) {
       tbl # skip in outcome vare already present
-    } else{
+    } else {
       if (memory_manage > 0L) {
         gc()
         tbl %>% # match
@@ -335,22 +336,24 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               .data$patID_k1 == .data$patID_k2 ~ 1L,
               .data$patID_k1 != .data$patID_k2 ~ 0L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c("patID_k1","patID_k2","matID_k1","matID_k2"))
-      } else{
+            )
+          ) %>% dplyr::select(-c("patID_k1", "patID_k2", "matID_k1", "matID_k2"))
+      } else {
         tbl %>% # match
           dplyr::mutate(
             same_patID = dplyr::case_when(
               .data$patID_k1 == .data$patID_k2 ~ 1L,
               .data$patID_k1 != .data$patID_k2 ~ 0L,
               TRUE ~ NA_integer_
-            ))
+            )
+          )
       }
     }
   }
-  mutateLinkage_same_matID <- function(tbl, memory_manage=0L){
-    if ("same_matID" %in% names(tbl)){
+  mutateLinkage_same_matID <- function(tbl, memory_manage = 0L) {
+    if ("same_matID" %in% names(tbl)) {
       tbl # skip in outcome vare already present
-    } else{
+    } else {
       if (memory_manage > 0L) {
         gc()
         tbl %>% # match
@@ -364,23 +367,25 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               .data$matID_k1 == .data$matID_k2 ~ 1L,
               .data$matID_k1 != .data$matID_k2 ~ 0L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c("patID_k1","patID_k2","matID_k1","matID_k2"))
-      } else{
+            )
+          ) %>% dplyr::select(-c("patID_k1", "patID_k2", "matID_k1", "matID_k2"))
+      } else {
         tbl %>% # match
           dplyr::mutate(
             same_matID = dplyr::case_when(
               .data$matID_k1 == .data$matID_k2 ~ 1L,
               .data$matID_k1 != .data$matID_k2 ~ 0L,
               TRUE ~ NA_integer_
-            ))
+            )
+          )
       }
     }
   }
 
-  mutateLinkage_any <- function(tbl, memory_manage=0L){
-    if ("linkagetype" %in% names(tbl)){
+  mutateLinkage_any <- function(tbl, memory_manage = 0L) {
+    if ("linkagetype" %in% names(tbl)) {
       tbl # skip in outcome vare already present
-    } else{
+    } else {
       if (memory_manage > 0L) {
         gc()
         tbl %>% # match
@@ -394,15 +399,18 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               .data$patID_k1 == .data$patID_k2 ~ 1L,
               .data$patID_k1 != .data$patID_k2 ~ 0L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c("patID_k1","patID_k2","matID_k1","matID_k2")) %>%
-          dplyr::mutate(  linkagetype = dplyr::case_when(
+            )
+          ) %>%
+          dplyr::select(-c("patID_k1", "patID_k2", "matID_k1", "matID_k2")) %>%
+          dplyr::mutate(linkagetype = dplyr::case_when(
             .data$same_matID == 1 & .data$same_patID == 1 ~ 11L,
             .data$same_matID == 0 & .data$same_patID == 0 ~ 00L,
             .data$same_matID == 1 & .data$same_patID == 0 ~ 11L,
             .data$same_matID == 0 & .data$same_patID == 1 ~ 11L,
             TRUE ~ NA_integer_
-          )) %>% dplyr::select(-c("same_matID", "same_patID"))
-      } else{
+          )) %>%
+          dplyr::select(-c("same_matID", "same_patID"))
+      } else {
         tbl %>% # match
           dplyr::mutate(
             same_matID = dplyr::case_when(
@@ -426,10 +434,10 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
       }
     }
   }
-  mutateCohort_19 <- function(tbl, memory_manage=0L){
-    if ("cohort_groupings" %in% names(tbl)){
+  mutateCohort_19 <- function(tbl, memory_manage = 0L) {
+    if ("cohort_groupings" %in% names(tbl)) {
       tbl # skip in outcome vare already present
-    } else{
+    } else {
       if (memory_manage > 0L) {
         gc()
         tbl %>% # match
@@ -443,13 +451,19 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               .data$BYr_k2 < 1900 ~ 18L,
               .data$BYr_k2 >= 1900 ~ 19L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c("BYr_k1","BYr_k2")) %>%
+            )
+          ) %>%
+          dplyr::select(-c("BYr_k1", "BYr_k2")) %>%
           dplyr::mutate(
-            cohort_groupings = dplyr::case_when(.data$cohort_k1 < .data$cohort_k2 ~ as.integer(.data$cohort_k1*100+.data$cohort_k2),
-                                         .data$cohort_k1 >= .data$cohort_k2 ~ as.integer(.data$cohort_k2*100+.data$cohort_k1),
-                                         TRUE ~ NA_integer_)
-          ) %>% dplyr::select(-c("cohort_k1","cohort_k2"))
-      }else{ tbl %>% # match
+            cohort_groupings = dplyr::case_when(
+              .data$cohort_k1 < .data$cohort_k2 ~ as.integer(.data$cohort_k1 * 100 + .data$cohort_k2),
+              .data$cohort_k1 >= .data$cohort_k2 ~ as.integer(.data$cohort_k2 * 100 + .data$cohort_k1),
+              TRUE ~ NA_integer_
+            )
+          ) %>%
+          dplyr::select(-c("cohort_k1", "cohort_k2"))
+      } else {
+        tbl %>% # match
           # birthcohort
           dplyr::mutate(
             cohort_k1 = dplyr::case_when(
@@ -469,10 +483,10 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
       }
     }
   }
-  mutateCohort_19flat <- function(tbl, memory_manage=0L){
-    if ("cohort_groupings" %in% names(tbl)){
+  mutateCohort_19flat <- function(tbl, memory_manage = 0L) {
+    if ("cohort_groupings" %in% names(tbl)) {
       tbl # skip in outcome vare already present
-    } else{
+    } else {
       if (memory_manage > 0L) {
         gc()
         tbl %>% # match
@@ -486,13 +500,19 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               .data$BYr_k2 < 1900 ~ 18L,
               .data$BYr_k2 >= 1900 ~ 19L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c("BYr_k1","BYr_k2")) %>%
+            )
+          ) %>%
+          dplyr::select(-c("BYr_k1", "BYr_k2")) %>%
           dplyr::mutate(
-            cohort_groupings = dplyr::case_when(.data$cohort_k1 == 19 & .data$cohort_k2 == 19 ~ as.integer(1919),
-                                         .data$cohort_k1 < 19 | .data$cohort_k2 <  19 ~ as.integer(1818),
-                                         TRUE ~ NA_integer_)
-          ) %>% dplyr::select(-c("cohort_k1","cohort_k2"))
-      }else{ tbl %>% # match
+            cohort_groupings = dplyr::case_when(
+              .data$cohort_k1 == 19 & .data$cohort_k2 == 19 ~ as.integer(1919),
+              .data$cohort_k1 < 19 | .data$cohort_k2 < 19 ~ as.integer(1818),
+              TRUE ~ NA_integer_
+            )
+          ) %>%
+          dplyr::select(-c("cohort_k1", "cohort_k2"))
+      } else {
+        tbl %>% # match
           # birthcohort
           dplyr::mutate(
             cohort_k1 = dplyr::case_when(
@@ -504,18 +524,20 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               .data$BYr_k2 < 1900 ~ 18L,
               .data$BYr_k2 >= 1900 ~ 19L,
               TRUE ~ NA_integer_
-            ), cohort_groupings = dplyr::case_when(.data$cohort_k1 == 19 & .data$cohort_k2 == 19 ~ as.integer(1919),
-                                            .data$cohort_k1 < 19 | .data$cohort_k2 <  19 ~ as.integer(1818),
-                                            TRUE ~ NA_integer_)
+            ), cohort_groupings = dplyr::case_when(
+              .data$cohort_k1 == 19 & .data$cohort_k2 == 19 ~ as.integer(1919),
+              .data$cohort_k1 < 19 | .data$cohort_k2 < 19 ~ as.integer(1818),
+              TRUE ~ NA_integer_
+            )
           )
       }
     }
   }
   # cohort_century
-  mutateCohortMatch <- function(tbl, memory_manage=0L){
-    if ("cohort_groupings" %in% names(tbl)){
+  mutateCohortMatch <- function(tbl, memory_manage = 0L) {
+    if ("cohort_groupings" %in% names(tbl)) {
       tbl # skip in outcome vare already present
-    } else{
+    } else {
       if (memory_manage > 0L) {
         gc()
         tbl %>% # match
@@ -535,13 +557,19 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               .data$BYr_k2 >= 1900 & .data$BYr_k2 < 2000 ~ 19L,
               .data$BYr_k2 >= 2000 & .data$BYr_k2 < 2100 ~ 20L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c("BYr_k1","BYr_k2")) %>%
+            )
+          ) %>%
+          dplyr::select(-c("BYr_k1", "BYr_k2")) %>%
           dplyr::mutate(
-            cohort_groupings = dplyr::case_when(.data$cohort_k1 == .data$cohort_k2 ~ as.integer(1),
-                                         .data$cohort_k1 != .data$cohort_k2 ~ as.integer(0),
-                                         TRUE ~ NA_integer_)
-          ) %>% dplyr::select(-c("cohort_k1","cohort_k2"))
-      }else{ tbl %>% # match
+            cohort_groupings = dplyr::case_when(
+              .data$cohort_k1 == .data$cohort_k2 ~ as.integer(1),
+              .data$cohort_k1 != .data$cohort_k2 ~ as.integer(0),
+              TRUE ~ NA_integer_
+            )
+          ) %>%
+          dplyr::select(-c("cohort_k1", "cohort_k2"))
+      } else {
+        tbl %>% # match
           # birthcohort
           dplyr::mutate(
             cohort_k1 = dplyr::case_when(
@@ -569,10 +597,10 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
   }
 
   # cohort_century
-  mutateCohort <- function(tbl, memory_manage=0L){
-    if ("cohort_groupings" %in% names(tbl)){
+  mutateCohort <- function(tbl, memory_manage = 0L) {
+    if ("cohort_groupings" %in% names(tbl)) {
       tbl # skip in outcome vare already present
-    } else{
+    } else {
       if (memory_manage > 0L) {
         gc()
         tbl %>% # match
@@ -592,13 +620,19 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
               .data$BYr_k2 >= 1900 & .data$BYr_k2 < 2000 ~ 19L,
               .data$BYr_k2 >= 2000 & .data$BYr_k2 < 2100 ~ 20L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c("BYr_k1","BYr_k2")) %>%
+            )
+          ) %>%
+          dplyr::select(-c("BYr_k1", "BYr_k2")) %>%
           dplyr::mutate(
-            cohort_groupings = dplyr::case_when(.data$cohort_k1 < .data$cohort_k2 ~ as.integer(.data$cohort_k1*100+.data$cohort_k2),
-                                         .data$cohort_k1 >= .data$cohort_k2 ~ as.integer(.data$cohort_k2*100+.data$cohort_k1),
-                                         TRUE ~ NA_integer_)
-          ) %>% dplyr::select(-c("cohort_k1","cohort_k2"))
-      }else{ tbl %>% # match
+            cohort_groupings = dplyr::case_when(
+              .data$cohort_k1 < .data$cohort_k2 ~ as.integer(.data$cohort_k1 * 100 + .data$cohort_k2),
+              .data$cohort_k1 >= .data$cohort_k2 ~ as.integer(.data$cohort_k2 * 100 + .data$cohort_k1),
+              TRUE ~ NA_integer_
+            )
+          ) %>%
+          dplyr::select(-c("cohort_k1", "cohort_k2"))
+      } else {
+        tbl %>% # match
           # birthcohort
           dplyr::mutate(
             cohort_k1 = dplyr::case_when(
@@ -631,55 +665,62 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
   if (length(mutate_vars) == 0 || is.na(mutate_vars) || mutate_vars == 0) {
     tbl
     #   message(paste("mutateFunction 1"))
-  } else if (mutate_vars == "gender_groupings_linkagetype"|mutate_vars == "gender_linkagetype") {
-    tbl %>% mutateLinkage(memory_manage=memory_manage) %>%
-      mutateGender(memory_manage=memory_manage)
+  } else if (mutate_vars == "gender_groupings_linkagetype" | mutate_vars == "gender_linkagetype") {
+    tbl %>%
+      mutateLinkage(memory_manage = memory_manage) %>%
+      mutateGender(memory_manage = memory_manage)
   } else if (mutate_vars == "linkagetype") {
     tbl %>% # match
-      mutateLinkage(memory_manage=memory_manage)
-  } else if (mutate_vars == "linkage_any"){
+      mutateLinkage(memory_manage = memory_manage)
+  } else if (mutate_vars == "linkage_any") {
     tbl %>% # match
-      mutateLinkage_any(memory_manage=memory_manage)
+      mutateLinkage_any(memory_manage = memory_manage)
   } else if (mutate_vars == "same_patID") {
     tbl %>% # match
-      mutateLinkage_same_patID(memory_manage=memory_manage)
+      mutateLinkage_same_patID(memory_manage = memory_manage)
   } else if (mutate_vars == "same_matID") {
     tbl %>% # match
-      mutateLinkage_same_matID(memory_manage=memory_manage)
+      mutateLinkage_same_matID(memory_manage = memory_manage)
   } else if (mutate_vars == "gender_groupings") {
     tbl %>%
-      mutateGender(memory_manage=memory_manage)
+      mutateGender(memory_manage = memory_manage)
   } else if (mutate_vars == "casecontrol_groupings") {
     tbl %>%
       mutateCaseControl(memory_manage = memory_manage)
   } else if (mutate_vars == "cohort_groupings_19") {
-    tbl %>% mutateCohort_19(memory_manage=memory_manage)
+    tbl %>% mutateCohort_19(memory_manage = memory_manage)
   } else if (mutate_vars == "cohort_groupings_19flat") {
-    tbl %>% mutateCohort_19flat(memory_manage=memory_manage)
+    tbl %>% mutateCohort_19flat(memory_manage = memory_manage)
   } else if (mutate_vars == "cohort_groupings_match") {
-    tbl %>% mutateCohortMatch(memory_manage=memory_manage)
+    tbl %>% mutateCohortMatch(memory_manage = memory_manage)
   } else if (mutate_vars == "cohort_groupings") {
-    tbl %>% mutateCohort(memory_manage=memory_manage)
+    tbl %>% mutateCohort(memory_manage = memory_manage)
   } else if (mutate_vars == "gender_cohort_groupings_19") {
-    tbl %>% mutateCohort_19(memory_manage=memory_manage) %>%
-      mutateGender(memory_manage=memory_manage)
+    tbl %>%
+      mutateCohort_19(memory_manage = memory_manage) %>%
+      mutateGender(memory_manage = memory_manage)
   } else if (mutate_vars == "gender_cohort_groupings") {
-    tbl %>% mutateCohort(memory_manage=memory_manage) %>%
-      mutateGender(memory_manage=memory_manage)
+    tbl %>%
+      mutateCohort(memory_manage = memory_manage) %>%
+      mutateGender(memory_manage = memory_manage)
   } else if (mutate_vars == "cohort_linkagetype_19") {
-    tbl %>% mutateLinkage(memory_manage=memory_manage) %>%
-      mutateCohort_19(memory_manage=memory_manage)
+    tbl %>%
+      mutateLinkage(memory_manage = memory_manage) %>%
+      mutateCohort_19(memory_manage = memory_manage)
   } else if (mutate_vars == "cohort_linkagetype") {
-    tbl %>% mutateLinkage(memory_manage=memory_manage) %>%
-      mutateCohort(memory_manage=memory_manage)
+    tbl %>%
+      mutateLinkage(memory_manage = memory_manage) %>%
+      mutateCohort(memory_manage = memory_manage)
   } else if (mutate_vars == "cohort_gender_linkagetype_19") {
-    tbl %>% mutateLinkage(memory_manage=memory_manage) %>%
-      mutateCohort_19(memory_manage=memory_manage) %>%
-      mutateGender(memory_manage=memory_manage)
+    tbl %>%
+      mutateLinkage(memory_manage = memory_manage) %>%
+      mutateCohort_19(memory_manage = memory_manage) %>%
+      mutateGender(memory_manage = memory_manage)
   } else if (mutate_vars == "cohort_gender_linkagetype") {
-    tbl %>% mutateLinkage(memory_manage=memory_manage) %>%
-      mutateCohort(memory_manage=memory_manage) %>%
-      mutateGender(memory_manage=memory_manage)
+    tbl %>%
+      mutateLinkage(memory_manage = memory_manage) %>%
+      mutateCohort(memory_manage = memory_manage) %>%
+      mutateGender(memory_manage = memory_manage)
   } else if (mode(mutate_vars) == "character") {
     mutate_call <- paste0("tbl %>% dplyr::mutate(", mutate_vars, ")")
     eval(parse(text = mutate_call))
@@ -750,9 +791,10 @@ summarizerFunction <- function(tbl,
                                mitj,
                                cnuk,
                                range_maxi = NULL,
-                               range_mini, verbose = FALSE, memory_manage = 0L,skinny_summarize_call=TRUE,
-                               SEN=FALSE
-) {
+                               range_mini,
+                               verbose = FALSE, memory_manage = 0L,
+                               skinny_summarize_call = TRUE,
+                               SEN = FALSE) {
   if (length(outcome_k1) != length(outcome_functions)) {
     stop("The vectors of function names and variables must be the same length")
   }
@@ -760,15 +802,15 @@ summarizerFunction <- function(tbl,
     stop("The vectors of outcome names must be the same length")
   }
 
-  if(SEN==FALSE){
-    if(skinny_summarize_call==TRUE){
-      if(memory_manage>1|| !("addRel" %in% names(tbl))) {
+  if (SEN == FALSE) {
+    if (skinny_summarize_call == TRUE) {
+      if (memory_manage > 1 || !("addRel" %in% names(tbl))) {
         summarize_call <- "tbl %>% dplyr::summarize( n_pairs = n()/(1+doubleentered), # if double entered this value is 2, and if not double entered this value is 1)
       addRel_min = try_NA(range_mini),
       addRel_max = try_NA(range_maxi),
       mtdna = try_NA(mitj),
       cnu = try_NA(cnuk),"
-      } else{
+      } else {
         summarize_call <- "tbl %>% dplyr::summarize( n_pairs = n()/(1+doubleentered), # if double entered this value is 2, and if not double entered this value is 1)
       addRel_min = try_NA(range_mini),
       addRel_max = try_NA(range_maxi),
@@ -780,14 +822,14 @@ summarizerFunction <- function(tbl,
       cnu = try_NA(cnuk),"
       }
     } else {
-      if(memory_manage>1|| !("addRel" %in% names(tbl))) {
+      if (memory_manage > 1 || !("addRel" %in% names(tbl))) {
         summarize_call <- "tbl %>% dplyr::summarize( n_pairs = n()/(1+doubleentered), # if double entered this value is 2, and if not double entered this value is 1)
       unique_n = dplyr::n_distinct(c(ID2,ID1)),
 	    addRel_min = try_NA(range_mini),
       addRel_max = try_NA(range_maxi),
       mtdna = try_NA(mitj),
       cnu = try_NA(cnuk),"
-      } else{
+      } else {
         summarize_call <- "tbl %>% dplyr::summarize( n_pairs = n()/(1+doubleentered), # if double entered this value is 2, and if not double entered this value is 1)
       unique_n = dplyr::n_distinct(c(ID2,ID1)),
 	    addRel_min = try_NA(range_mini),
@@ -811,98 +853,116 @@ summarizerFunction <- function(tbl,
       addRel_max = try_NA(range_maxi),
       mtdna = try_NA(mitj),
       cnu = try_NA(cnuk),"
-
   }
 
 
-  summarize_parts <- mapply(function(var_k1,
-                                     var_k2,
-                                     fun) {
-    if (fun == "polychorFunction") {
-      paste0(var_k1, "_", fun, " = list(try_NA(polychor(",
-             var_k1, "_k1,",
-             var_k2, "_k2, std.err=TRUE)) %>%
+  summarize_parts <- mapply(
+    function(var_k1,
+             var_k2,
+             fun) {
+      if (fun == "polychorFunction") {
+        paste0(
+          var_k1, "_", fun, " = list(try_NA(polycor::polychor(",
+          var_k1, "_k1,",
+          var_k2, "_k2, std.err=TRUE)) %>%
                  {list(rho = try_NA(.$rho),
                        se = sqrt(try_NA(.$var)),
                        chisq = try_NA(.$chisq),
-                       df = try_NA(.$df))})")
-    } else if (fun == "ml_polychorFunction") {
-      paste0(var_k1, "_", fun, " = try_NA(polychor(", var_k1, "_k1,", var_k2, "_k2,ML=TRUE))")
-    } else if (fun == "relriskFunction") {
-      paste0(var_k1, "_", fun, " = list(try_NA(relriskFunction(",
-             var_k1, "_k1, ",
-             var_k2, "_k2)) %>%
+                       df = try_NA(.$df))})"
+        )
+      } else if (fun == "ml_polychorFunction") {
+        paste0(var_k1, "_", fun, " = try_NA(polycor::polychor(", var_k1, "_k1,", var_k2, "_k2,ML=TRUE))")
+      } else if (fun == "relriskFunction") {
+        paste0(
+          var_k1, "_", fun, " = list(try_NA(relriskFunction(",
+          var_k1, "_k1, ",
+          var_k2, "_k2)) %>%
              {list(rr = try_NA(.[1]),
                    LL = try_NA(.[2]),
-                   UL = try_NA(.[3]))})")
-    } else if (fun %in% c("phi_both", "rr_exposed_cases", "rr_a")){
-      paste0(var_k1, "_", fun, "= try_NA(sum(", var_k1, "_k1 == 1 & ",var_k2, "_k2 == 1, na.rm=TRUE))")
-    } else if (fun %in% c("phi_none", "rr_unexposed_noncases", "rr_d")) {
-      paste0(var_k1, "_", fun, "= try_NA(sum(", var_k1, "_k1 == 0 & ",var_k2, "_k2 == 0, na.rm=TRUE))")
-    } else if (fun %in% c("phi_one", "rr_discordant", "rr_b_plus_c")) {
-      paste0(var_k1, "_", fun, "= try_NA(sum((", var_k1, "_k1 == 1 & ",var_k2, "_k2 == 0) | (", var_k1, "_k1 == 0 & ",var_k2, "_k2 == 1), na.rm = TRUE))")
-    } else if (fun %in% c("phi_k1_yes_k2_no", "rr_exposed_noncases", "rr_b")) {
-      paste0(var_k1, "_", fun, " = try_NA(sum(", var_k1, "_k1 == 1 & ", var_k2, "_k2 == 0, na.rm = TRUE))")
-
-    } else if (fun %in% c("phi_k1_no_k2_yes", "rr_unexposed_cases", "rr_c")) {
-      paste0(var_k1, "_", fun, " = try_NA(sum(", var_k1, "_k1 == 0 & ", var_k2, "_k2 == 1, na.rm = TRUE))")
-    } else if (fun == "phi_est"){
-      paste0(var_k1, "_", fun, " = try_NA(ci.phi(.05,f11= ",
-             var_k1, "_phi_both, f01= ",
-             var_k1, "_phi_one, f10=",
-             var_k1, "_phi_one, f00 = ",
-             var_k1, "_phi_none))[1]")
-    } else if (fun == "phi_se"){
-      paste0(var_k1, "_", fun, " = try_NA(ci.phi(.05,f11= ",
-             var_k1, "_phi_both, f01= ",
-             var_k1, "_phi_one,f10=",
-             var_k1, "_phi_one,f00 = ",
-             var_k1, "_phi_none))[2]")
-    } else if (fun == "phi_LL"){
-      paste0(var_k1, "_", fun, " = try_NA(ci.phi(.05,f11= ",
-             var_k1, "_phi_both, f01= ",
-             var_k1, "_phi_one,f10=",
-             var_k1, "_phi_one,f00 = ",
-             var_k1, "_phi_none))[3]")
-    } else if (fun == "phi_UL"){
-      paste0(var_k1, "_", fun, " = try_NA(ci.phi(.05,f11= ",
-             var_k1, "_phi_both, f01= ",
-             var_k1, "_phi_one,f10=",
-             var_k1, "_phi_one,f00 = ",
-             var_k1, "_phi_none))[4]")
-    } else if (fun == "phi_ci"){
-      paste0(var_k1, "_", fun, " = list(try_NA(ci.phi(.05,f11= ",
-             var_k1, "_phi_both, f01= ",
-             var_k1, "_phi_one,f10=",
-             var_k1, "_phi_one,f00 = ",
-             var_k1, "_phi_none))  %>%
+                   UL = try_NA(.[3]))})"
+        )
+      } else if (fun %in% c("phi_both", "rr_exposed_cases", "rr_a")) {
+        paste0(var_k1, "_", fun, "= try_NA(sum(", var_k1, "_k1 == 1 & ", var_k2, "_k2 == 1, na.rm=TRUE))")
+      } else if (fun %in% c("phi_none", "rr_unexposed_noncases", "rr_d")) {
+        paste0(var_k1, "_", fun, "= try_NA(sum(", var_k1, "_k1 == 0 & ", var_k2, "_k2 == 0, na.rm=TRUE))")
+      } else if (fun %in% c("phi_one", "rr_discordant", "rr_b_plus_c")) {
+        paste0(var_k1, "_", fun, "= try_NA(sum((", var_k1, "_k1 == 1 & ", var_k2, "_k2 == 0) | (", var_k1, "_k1 == 0 & ", var_k2, "_k2 == 1), na.rm = TRUE))")
+      } else if (fun %in% c("phi_k1_yes_k2_no", "rr_exposed_noncases", "rr_b")) {
+        paste0(var_k1, "_", fun, " = try_NA(sum(", var_k1, "_k1 == 1 & ", var_k2, "_k2 == 0, na.rm = TRUE))")
+      } else if (fun %in% c("phi_k1_no_k2_yes", "rr_unexposed_cases", "rr_c")) {
+        paste0(var_k1, "_", fun, " = try_NA(sum(", var_k1, "_k1 == 0 & ", var_k2, "_k2 == 1, na.rm = TRUE))")
+      } else if (fun == "phi_est") {
+        paste0(
+          var_k1, "_", fun, " = try_NA(ci.phi(.05,f11= ",
+          var_k1, "_phi_both, f01= ",
+          var_k1, "_phi_one, f10=",
+          var_k1, "_phi_one, f00 = ",
+          var_k1, "_phi_none))[1]"
+        )
+      } else if (fun == "phi_se") {
+        paste0(
+          var_k1, "_", fun, " = try_NA(ci.phi(.05,f11= ",
+          var_k1, "_phi_both, f01= ",
+          var_k1, "_phi_one,f10=",
+          var_k1, "_phi_one,f00 = ",
+          var_k1, "_phi_none))[2]"
+        )
+      } else if (fun == "phi_LL") {
+        paste0(
+          var_k1, "_", fun, " = try_NA(ci.phi(.05,f11= ",
+          var_k1, "_phi_both, f01= ",
+          var_k1, "_phi_one,f10=",
+          var_k1, "_phi_one,f00 = ",
+          var_k1, "_phi_none))[3]"
+        )
+      } else if (fun == "phi_UL") {
+        paste0(
+          var_k1, "_", fun, " = try_NA(ci.phi(.05,f11= ",
+          var_k1, "_phi_both, f01= ",
+          var_k1, "_phi_one,f10=",
+          var_k1, "_phi_one,f00 = ",
+          var_k1, "_phi_none))[4]"
+        )
+      } else if (fun == "phi_ci") {
+        paste0(
+          var_k1, "_", fun, " = list(try_NA(ci.phi(.05,f11= ",
+          var_k1, "_phi_both, f01= ",
+          var_k1, "_phi_one,f10=",
+          var_k1, "_phi_one,f00 = ",
+          var_k1, "_phi_none))  %>%
              {list(phi = try_NA(.$Estimate),
                    se = try_NA(.$SE),
                    LL = try_NA(.$LL),
-                   UL = try_NA(.$UL))})")
-    } else if (fun == "rr_risk_exposed") {
-      paste0(var_k1, "_", fun_k1, " = try_NA(ifelse((",
-             var_k1, "_rr_a + ", var_k1, "_rr_b) > 0, ",
-             var_k1, "_rr_a / (", var_k1, "_rr_a + ", var_k1, "_rr_b), ",
-             "NA_real_))")
-
-    } else if (fun == "rr_risk_unexposed") {
-      paste0(var_k1, "_", fun, " = try_NA(ifelse((",
-             var_k1, "_rr_c + ", var_k1, "_rr_d) > 0, ",
-             var_k1, "_rr_c / (", var_k1, "_rr_c + ", var_k1, "_rr_d), ",
-             "NA_real_))")
-
-    } else if (fun == "rr_est") {
-      paste0(var_k1, "_", fun, " = try_NA(ifelse(",
-             var_k1, "_rr_risk_unexposed > 0, ",
-             var_k1, "_rr_risk_exposed / ", var, "_rr_risk_unexposed, ",
-             "NA_real_))")
-    }else{
-      paste0(var_k1, "_", fun, " = try_NA(", fun, "(", var_k1, "))")
-    }
-  }, outcome_k1, outcome_k2,
-
-  outcome_functions, SIMPLIFY = FALSE)
+                   UL = try_NA(.$UL))})"
+        )
+      } else if (fun == "rr_risk_exposed") {
+        paste0(
+          var_k1, "_", fun_k1, " = try_NA(ifelse((",
+          var_k1, "_rr_a + ", var_k1, "_rr_b) > 0, ",
+          var_k1, "_rr_a / (", var_k1, "_rr_a + ", var_k1, "_rr_b), ",
+          "NA_real_))"
+        )
+      } else if (fun == "rr_risk_unexposed") {
+        paste0(
+          var_k1, "_", fun, " = try_NA(ifelse((",
+          var_k1, "_rr_c + ", var_k1, "_rr_d) > 0, ",
+          var_k1, "_rr_c / (", var_k1, "_rr_c + ", var_k1, "_rr_d), ",
+          "NA_real_))"
+        )
+      } else if (fun == "rr_est") {
+        paste0(
+          var_k1, "_", fun, " = try_NA(ifelse(",
+          var_k1, "_rr_risk_unexposed > 0, ",
+          var_k1, "_rr_risk_exposed / ", var, "_rr_risk_unexposed, ",
+          "NA_real_))"
+        )
+      } else {
+        paste0(var_k1, "_", fun, " = try_NA(", fun, "(", var_k1, "))")
+      }
+    }, outcome_k1, outcome_k2,
+    outcome_functions,
+    SIMPLIFY = FALSE
+  )
   # if unnesting variable is needed
   unnest_parts <- c()
 
@@ -945,8 +1005,10 @@ summarizerFunction <- function(tbl,
   }
 
 
-  summarize_call <- paste0(summarize_call,
-                           paste(summarize_parts, collapse = ", "), ")", unnest_call)
+  summarize_call <- paste0(
+    summarize_call,
+    paste(summarize_parts, collapse = ", "), ")", unnest_call
+  )
   if (verbose) {
     message(summarize_call)
   }
@@ -997,7 +1059,7 @@ sdFunction <- function(x) {
 #' @keywords internal
 
 q25Function <- function(x) {
-  quantile(x, na.rm = TRUE,probs = .25)
+  quantile(x, na.rm = TRUE, probs = .25)
 }
 
 #' Compute the 75th Percentile, Ignoring Missing Values
@@ -1011,7 +1073,7 @@ q25Function <- function(x) {
 #' @keywords internal
 
 q75Function <- function(x) {
-  quantile(x, na.rm = TRUE,probs = .75)
+  quantile(x, na.rm = TRUE, probs = .75)
 }
 
 #' Compute the Median (50th Percentile), Ignoring Missing Values
@@ -1025,7 +1087,7 @@ q75Function <- function(x) {
 #' @keywords internal
 
 q50Function <- function(x) {
-  quantile(x, na.rm = TRUE,probs = .5)
+  quantile(x, na.rm = TRUE, probs = .5)
 }
 
 #' Compute the Relative Risk for a Binary Outcome Pair
@@ -1081,9 +1143,12 @@ relriskFunction <- function(k1, k2, conf.level = 0.95, method = "score") {
 #'   CSV file.
 #'
 #' @keywords internal
-make_input_file <- function(data_path,df_foldername,binwidth_cha,mit,range_min,range_max){
-  paste0(data_path,"data/", df_foldername, "_", binwidth_cha, "/df_mt", mit, "_r", range_min, "-r", range_max, ".csv")
-
+make_input_file <- function(data_path,
+                            df_foldername,
+                            binwidth_cha, mit,
+                            range_min,
+                            range_max) {
+  paste0(data_path, "data/", df_foldername, "_", binwidth_cha, "/df_mt", mit, "_r", range_min, "-r", range_max, ".csv")
 }
 
 
@@ -1106,9 +1171,9 @@ make_input_file <- function(data_path,df_foldername,binwidth_cha,mit,range_min,r
 #' @keywords internal
 read_kinbin <- function(input_file, drop_variables = c("mitRel"), verbose = FALSE) {
   dataRelatedPair_merge <- try_NA(data.table::fread(input_file,
-                                        header = TRUE,
-                                        #  drop vars to slim
-                                        drop = drop_variables
+    header = TRUE,
+    #  drop vars to slim
+    drop = drop_variables
   )) %>%
     #   dplyr::mutate(addRel = round(addRel, digits = 4)) %>% # can be dropped?
     suppressWarnings()
