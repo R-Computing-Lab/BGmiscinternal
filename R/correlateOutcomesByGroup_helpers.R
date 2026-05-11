@@ -246,21 +246,21 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
         tbl %>% # match
           dplyr::mutate(
             gender_groupings = dplyr::case_when(
-              male_k1 == 1 & male_k2 == 1 ~ 2L,
-              male_k1 == 0 & male_k2 == 0 ~ 0L,
-              male_k1 == 1 & male_k2 == 0 ~ 1L,
-              male_k1 == 0 & male_k2 == 1 ~ 1L,
+              .data$male_k1 == 1 & .data$male_k2 == 1 ~ 2L,
+              .data$male_k1 == 0 & .data$male_k2 == 0 ~ 0L,
+              .data$male_k1 == 1 & .data$male_k2 == 0 ~ 1L,
+              .data$male_k1 == 0 & .data$male_k2 == 1 ~ 1L,
               TRUE ~ NA_integer_
             )
-          )   %>% dplyr::select(-c(male_k2))
+          )   %>% dplyr::select(-"male_k2")
       } else{
         tbl %>% # match
           dplyr::mutate(
             gender_groupings = dplyr::case_when(
-              male_k1 == 1 & male_k2 == 1 ~ 2L,
-              male_k1 == 0 & male_k2 == 0 ~ 0L,
-              male_k1 == 1 & male_k2 == 0 ~ 1L,
-              male_k1 == 0 & male_k2 == 1 ~ 1L,
+              .data$male_k1 == 1 & .data$male_k2 == 1 ~ 2L,
+              .data$male_k1 == 0 & .data$male_k2 == 0 ~ 0L,
+              .data$male_k1 == 1 & .data$male_k2 == 0 ~ 1L,
+              .data$male_k1 == 0 & .data$male_k2 == 1 ~ 1L,
               TRUE ~ NA_integer_
             )
           )
@@ -277,40 +277,40 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
         tbl %>% # match
           dplyr::mutate(
             same_matID = dplyr::case_when(
-              matID_k1 == matID_k2 ~ 1L,
-              matID_k1 != matID_k2 ~ 0L,
+              .data$matID_k1 == .data$matID_k2 ~ 1L,
+              .data$matID_k1 != .data$matID_k2 ~ 0L,
               TRUE ~ NA_integer_
             ),
             same_patID = dplyr::case_when(
-              patID_k1 == patID_k2 ~ 1L,
-              patID_k1 != patID_k2 ~ 0L,
+              .data$patID_k1 == .data$patID_k2 ~ 1L,
+              .data$patID_k1 != .data$patID_k2 ~ 0L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c(patID_k1,patID_k2,matID_k1,matID_k2)) %>%
+            )) %>% dplyr::select(-c("patID_k1","patID_k2","matID_k1","matID_k2")) %>%
           dplyr::mutate(  linkagetype = dplyr::case_when(
-            same_matID == 1 & same_patID == 1 ~ 11L,
-            same_matID == 0 & same_patID == 0 ~ 00L,
-            same_matID == 1 & same_patID == 0 ~ 10L,
-            same_matID == 0 & same_patID == 1 ~ 01L,
+            .data$same_matID == 1 & .data$same_patID == 1 ~ 11L,
+            .data$same_matID == 0 & .data$same_patID == 0 ~ 00L,
+            .data$same_matID == 1 & .data$same_patID == 0 ~ 10L,
+            .data$same_matID == 0 & .data$same_patID == 1 ~ 01L,
             TRUE ~ NA_integer_
-          )) %>% dplyr::select(-c(same_matID, same_patID))
+          )) %>% dplyr::select(-c("same_matID", "same_patID"))
       } else{
         tbl %>% # match
           dplyr::mutate(
             same_matID = dplyr::case_when(
-              matID_k1 == matID_k2 ~ 1L,
-              matID_k1 != matID_k2 ~ 0L,
+              .data$matID_k1 == .data$matID_k2 ~ 1L,
+              .data$matID_k1 != .data$matID_k2 ~ 0L,
               TRUE ~ NA_integer_
             ),
             same_patID = dplyr::case_when(
-              patID_k1 == patID_k2 ~ 1L,
-              patID_k1 != patID_k2 ~ 0L,
+              .data$patID_k1 == .data$patID_k2 ~ 1L,
+              .data$patID_k1 != .data$patID_k2 ~ 0L,
               TRUE ~ NA_integer_
             ),
             linkagetype = dplyr::case_when(
-              same_matID == 1 & same_patID == 1 ~ 11L,
-              same_matID == 0 & same_patID == 0 ~ 00L,
-              same_matID == 1 & same_patID == 0 ~ 10L,
-              same_matID == 0 & same_patID == 1 ~ 01L,
+              .data$same_matID == 1 & .data$same_patID == 1 ~ 11L,
+              .data$same_matID == 0 & .data$same_patID == 0 ~ 00L,
+              .data$same_matID == 1 & .data$same_patID == 0 ~ 10L,
+              .data$same_matID == 0 & .data$same_patID == 1 ~ 01L,
               TRUE ~ NA_integer_
             )
           )
@@ -332,16 +332,16 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
             #    TRUE ~ NA_integer_
             #  ),
             same_patID = dplyr::case_when(
-              patID_k1 == patID_k2 ~ 1L,
-              patID_k1 != patID_k2 ~ 0L,
+              .data$patID_k1 == .data$patID_k2 ~ 1L,
+              .data$patID_k1 != .data$patID_k2 ~ 0L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c(patID_k1,patID_k2,matID_k1,matID_k2))
+            )) %>% dplyr::select(-c("patID_k1","patID_k2","matID_k1","matID_k2"))
       } else{
         tbl %>% # match
           dplyr::mutate(
             same_patID = dplyr::case_when(
-              patID_k1 == patID_k2 ~ 1L,
-              patID_k1 != patID_k2 ~ 0L,
+              .data$patID_k1 == .data$patID_k2 ~ 1L,
+              .data$patID_k1 != .data$patID_k2 ~ 0L,
               TRUE ~ NA_integer_
             ))
       }
@@ -361,16 +361,16 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
             #    TRUE ~ NA_integer_
             #  ),
             same_matID = dplyr::case_when(
-              matID_k1 == matID_k2 ~ 1L,
-              matID_k1 != matID_k2 ~ 0L,
+              .data$matID_k1 == .data$matID_k2 ~ 1L,
+              .data$matID_k1 != .data$matID_k2 ~ 0L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c(patID_k1,patID_k2,matID_k1,matID_k2))
+            )) %>% dplyr::select(-c("patID_k1","patID_k2","matID_k1","matID_k2"))
       } else{
         tbl %>% # match
           dplyr::mutate(
             same_matID = dplyr::case_when(
-              matID_k1 == matID_k2 ~ 1L,
-              matID_k1 != matID_k2 ~ 0L,
+              .data$matID_k1 == .data$matID_k2 ~ 1L,
+              .data$matID_k1 != .data$matID_k2 ~ 0L,
               TRUE ~ NA_integer_
             ))
       }
@@ -386,40 +386,40 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
         tbl %>% # match
           dplyr::mutate(
             same_matID = dplyr::case_when(
-              matID_k1 == matID_k2 ~ 1L,
-              matID_k1 != matID_k2 ~ 0L,
+              .data$matID_k1 == .data$matID_k2 ~ 1L,
+              .data$matID_k1 != .data$matID_k2 ~ 0L,
               TRUE ~ NA_integer_
             ),
             same_patID = dplyr::case_when(
-              patID_k1 == patID_k2 ~ 1L,
-              patID_k1 != patID_k2 ~ 0L,
+              .data$patID_k1 == .data$patID_k2 ~ 1L,
+              .data$patID_k1 != .data$patID_k2 ~ 0L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c(patID_k1,patID_k2,matID_k1,matID_k2)) %>%
+            )) %>% dplyr::select(-c("patID_k1","patID_k2","matID_k1","matID_k2")) %>%
           dplyr::mutate(  linkagetype = dplyr::case_when(
-            same_matID == 1 & same_patID == 1 ~ 11L,
-            same_matID == 0 & same_patID == 0 ~ 00L,
-            same_matID == 1 & same_patID == 0 ~ 11L,
-            same_matID == 0 & same_patID == 1 ~ 11L,
+            .data$same_matID == 1 & .data$same_patID == 1 ~ 11L,
+            .data$same_matID == 0 & .data$same_patID == 0 ~ 00L,
+            .data$same_matID == 1 & .data$same_patID == 0 ~ 11L,
+            .data$same_matID == 0 & .data$same_patID == 1 ~ 11L,
             TRUE ~ NA_integer_
-          )) %>% dplyr::select(-c(same_matID, same_patID))
+          )) %>% dplyr::select(-c("same_matID", "same_patID"))
       } else{
         tbl %>% # match
           dplyr::mutate(
             same_matID = dplyr::case_when(
-              matID_k1 == matID_k2 ~ 1L,
-              matID_k1 != matID_k2 ~ 0L,
+              .data$matID_k1 == .data$matID_k2 ~ 1L,
+              .data$matID_k1 != .data$matID_k2 ~ 0L,
               TRUE ~ NA_integer_
             ),
             same_patID = dplyr::case_when(
-              patID_k1 == patID_k2 ~ 1L,
-              patID_k1 != patID_k2 ~ 0L,
+              .data$patID_k1 == .data$patID_k2 ~ 1L,
+              .data$patID_k1 != .data$patID_k2 ~ 0L,
               TRUE ~ NA_integer_
             ),
             linkagetype = dplyr::case_when(
-              same_matID == 1 & same_patID == 1 ~ 11L,
-              same_matID == 0 & same_patID == 0 ~ 00L,
-              same_matID == 1 & same_patID == 0 ~ 11L,
-              same_matID == 0 & same_patID == 1 ~ 11L,
+              .data$same_matID == 1 & .data$same_patID == 1 ~ 11L,
+              .data$same_matID == 0 & .data$same_patID == 0 ~ 00L,
+              .data$same_matID == 1 & .data$same_patID == 0 ~ 11L,
+              .data$same_matID == 0 & .data$same_patID == 1 ~ 11L,
               TRUE ~ NA_integer_
             )
           )
@@ -435,35 +435,35 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
         tbl %>% # match
           dplyr::mutate(
             cohort_k1 = dplyr::case_when(
-              BYr_k1 < 1900 ~ 18L,
-              BYr_k1 >= 1900 ~ 19L,
+              .data$BYr_k1 < 1900 ~ 18L,
+              .data$BYr_k1 >= 1900 ~ 19L,
               TRUE ~ NA_integer_
             ),
             cohort_k2 = dplyr::case_when(
-              BYr_k2 < 1900 ~ 18L,
-              BYr_k2 >= 1900 ~ 19L,
+              .data$BYr_k2 < 1900 ~ 18L,
+              .data$BYr_k2 >= 1900 ~ 19L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c(BYr_k1,BYr_k2)) %>%
+            )) %>% dplyr::select(-c("BYr_k1","BYr_k2")) %>%
           dplyr::mutate(
-            cohort_groupings = dplyr::case_when(cohort_k1 < cohort_k2 ~ as.integer(cohort_k1*100+cohort_k2),
-                                         cohort_k1 >= cohort_k2 ~ as.integer(cohort_k2*100+cohort_k1),
+            cohort_groupings = dplyr::case_when(.data$cohort_k1 < .data$cohort_k2 ~ as.integer(.data$cohort_k1*100+.data$cohort_k2),
+                                         .data$cohort_k1 >= .data$cohort_k2 ~ as.integer(.data$cohort_k2*100+.data$cohort_k1),
                                          TRUE ~ NA_integer_)
-          ) %>% dplyr::select(-c(cohort_k1,cohort_k2))
+          ) %>% dplyr::select(-c("cohort_k1","cohort_k2"))
       }else{ tbl %>% # match
           # birthcohort
           dplyr::mutate(
             cohort_k1 = dplyr::case_when(
-              BYr_k1 < 1900 ~ 18L,
-              BYr_k1 >= 1900 ~ 19L,
+              .data$BYr_k1 < 1900 ~ 18L,
+              .data$BYr_k1 >= 1900 ~ 19L,
               TRUE ~ NA_integer_
             ),
             cohort_k2 = dplyr::case_when(
-              BYr_k2 < 1900 ~ 18L,
-              BYr_k2 >= 1900 ~ 19L,
+              .data$BYr_k2 < 1900 ~ 18L,
+              .data$BYr_k2 >= 1900 ~ 19L,
               TRUE ~ NA_integer_
             ), cohort_groupings = ifelse(
-              cohort_k1 < cohort_k2, paste(cohort_k1, cohort_k2, sep = "_"),
-              paste(cohort_k2, cohort_k1, sep = "_")
+              .data$cohort_k1 < .data$cohort_k2, paste(.data$cohort_k1, .data$cohort_k2, sep = "_"),
+              paste(.data$cohort_k2, .data$cohort_k1, sep = "_")
             )
           )
       }
@@ -478,34 +478,34 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
         tbl %>% # match
           dplyr::mutate(
             cohort_k1 = dplyr::case_when(
-              BYr_k1 < 1900 ~ 18L,
-              BYr_k1 >= 1900 ~ 19L,
+              .data$BYr_k1 < 1900 ~ 18L,
+              .data$BYr_k1 >= 1900 ~ 19L,
               TRUE ~ NA_integer_
             ),
             cohort_k2 = dplyr::case_when(
-              BYr_k2 < 1900 ~ 18L,
-              BYr_k2 >= 1900 ~ 19L,
+              .data$BYr_k2 < 1900 ~ 18L,
+              .data$BYr_k2 >= 1900 ~ 19L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c(BYr_k1,BYr_k2)) %>%
+            )) %>% dplyr::select(-c("BYr_k1","BYr_k2")) %>%
           dplyr::mutate(
-            cohort_groupings = dplyr::case_when(cohort_k1 == 19 & cohort_k2 == 19 ~ as.integer(1919),
-                                         cohort_k1 < 19 | cohort_k2 <  19 ~ as.integer(1818),
+            cohort_groupings = dplyr::case_when(.data$cohort_k1 == 19 & .data$cohort_k2 == 19 ~ as.integer(1919),
+                                         .data$cohort_k1 < 19 | .data$cohort_k2 <  19 ~ as.integer(1818),
                                          TRUE ~ NA_integer_)
-          ) %>% dplyr::select(-c(cohort_k1,cohort_k2))
+          ) %>% dplyr::select(-c("cohort_k1","cohort_k2"))
       }else{ tbl %>% # match
           # birthcohort
           dplyr::mutate(
             cohort_k1 = dplyr::case_when(
-              BYr_k1 < 1900 ~ 18L,
-              BYr_k1 >= 1900 ~ 19L,
+              .data$BYr_k1 < 1900 ~ 18L,
+              .data$BYr_k1 >= 1900 ~ 19L,
               TRUE ~ NA_integer_
             ),
             cohort_k2 = dplyr::case_when(
-              BYr_k2 < 1900 ~ 18L,
-              BYr_k2 >= 1900 ~ 19L,
+              .data$BYr_k2 < 1900 ~ 18L,
+              .data$BYr_k2 >= 1900 ~ 19L,
               TRUE ~ NA_integer_
-            ), cohort_groupings = dplyr::case_when(cohort_k1 == 19 & cohort_k2 == 19 ~ as.integer(1919),
-                                            cohort_k1 < 19 | cohort_k2 <  19 ~ as.integer(1818),
+            ), cohort_groupings = dplyr::case_when(.data$cohort_k1 == 19 & .data$cohort_k2 == 19 ~ as.integer(1919),
+                                            .data$cohort_k1 < 19 | .data$cohort_k2 <  19 ~ as.integer(1818),
                                             TRUE ~ NA_integer_)
           )
       }
@@ -521,46 +521,46 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
         tbl %>% # match
           dplyr::mutate(
             cohort_k1 = dplyr::case_when(
-              BYr_k1 >= 1600 & BYr_k1 < 1700 ~ 16L,
-              BYr_k1 >= 1700 & BYr_k1 < 1800 ~ 17L,
-              BYr_k1 >= 1800 & BYr_k1 < 1900 ~ 18L,
-              BYr_k1 >= 1900 & BYr_k1 < 2000 ~ 19L,
-              BYr_k1 >= 2000 & BYr_k1 < 2100 ~ 20L,
+              .data$BYr_k1 >= 1600 & .data$BYr_k1 < 1700 ~ 16L,
+              .data$BYr_k1 >= 1700 & .data$BYr_k1 < 1800 ~ 17L,
+              .data$BYr_k1 >= 1800 & .data$BYr_k1 < 1900 ~ 18L,
+              .data$BYr_k1 >= 1900 & .data$BYr_k1 < 2000 ~ 19L,
+              .data$BYr_k1 >= 2000 & .data$BYr_k1 < 2100 ~ 20L,
               TRUE ~ NA_integer_
             ),
             cohort_k2 = dplyr::case_when(
-              BYr_k2 >= 1600 & BYr_k2 < 1700 ~ 16L,
-              BYr_k2 >= 1700 & BYr_k2 < 1800 ~ 17L,
-              BYr_k2 >= 1800 & BYr_k2 < 1900 ~ 18L,
-              BYr_k2 >= 1900 & BYr_k2 < 2000 ~ 19L,
-              BYr_k2 >= 2000 & BYr_k2 < 2100 ~ 20L,
+              .data$BYr_k2 >= 1600 & .data$BYr_k2 < 1700 ~ 16L,
+              .data$BYr_k2 >= 1700 & .data$BYr_k2 < 1800 ~ 17L,
+              .data$BYr_k2 >= 1800 & .data$BYr_k2 < 1900 ~ 18L,
+              .data$BYr_k2 >= 1900 & .data$BYr_k2 < 2000 ~ 19L,
+              .data$BYr_k2 >= 2000 & .data$BYr_k2 < 2100 ~ 20L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c(BYr_k1,BYr_k2)) %>%
+            )) %>% dplyr::select(-c("BYr_k1","BYr_k2")) %>%
           dplyr::mutate(
-            cohort_groupings = dplyr::case_when(cohort_k1 == cohort_k2 ~ as.integer(1),
-                                         cohort_k1 != cohort_k2 ~ as.integer(0),
+            cohort_groupings = dplyr::case_when(.data$cohort_k1 == .data$cohort_k2 ~ as.integer(1),
+                                         .data$cohort_k1 != .data$cohort_k2 ~ as.integer(0),
                                          TRUE ~ NA_integer_)
-          ) %>% dplyr::select(-c(cohort_k1,cohort_k2))
+          ) %>% dplyr::select(-c("cohort_k1","cohort_k2"))
       }else{ tbl %>% # match
           # birthcohort
           dplyr::mutate(
             cohort_k1 = dplyr::case_when(
-              BYr_k1 >= 1600 & BYr_k1 < 1700 ~ 16L,
-              BYr_k1 >= 1700 & BYr_k1 < 1800 ~ 17L,
-              BYr_k1 >= 1800 & BYr_k1 < 1900 ~ 18L,
-              BYr_k1 >= 1900 & BYr_k1 < 2000 ~ 19L,
-              BYr_k1 >= 2000 & BYr_k1 < 2100 ~ 20L,
+              .data$BYr_k1 >= 1600 & .data$BYr_k1 < 1700 ~ 16L,
+              .data$BYr_k1 >= 1700 & .data$BYr_k1 < 1800 ~ 17L,
+              .data$BYr_k1 >= 1800 & .data$BYr_k1 < 1900 ~ 18L,
+              .data$BYr_k1 >= 1900 & .data$BYr_k1 < 2000 ~ 19L,
+              .data$BYr_k1 >= 2000 & .data$BYr_k1 < 2100 ~ 20L,
               TRUE ~ NA_integer_
             ),
             cohort_k2 = dplyr::case_when(
-              BYr_k2 >= 1600 & BYr_k2 < 1700 ~ 16L,
-              BYr_k2 >= 1700 & BYr_k2 < 1800 ~ 17L,
-              BYr_k2 >= 1800 & BYr_k2 < 1900 ~ 18L,
-              BYr_k2 >= 1900 & BYr_k2 < 2000 ~ 19L,
-              BYr_k2 >= 2000 & BYr_k2 < 2100 ~ 20L,
+              .data$BYr_k2 >= 1600 & .data$BYr_k2 < 1700 ~ 16L,
+              .data$BYr_k2 >= 1700 & .data$BYr_k2 < 1800 ~ 17L,
+              .data$BYr_k2 >= 1800 & .data$BYr_k2 < 1900 ~ 18L,
+              .data$BYr_k2 >= 1900 & .data$BYr_k2 < 2000 ~ 19L,
+              .data$BYr_k2 >= 2000 & .data$BYr_k2 < 2100 ~ 20L,
               TRUE ~ NA_integer_
             ), cohort_groupings = ifelse(
-              cohort_k1 == cohort_k2, as.integer(1),
+              .data$cohort_k1 == .data$cohort_k2, as.integer(1),
               as.integer(0)
             )
           )
@@ -578,47 +578,47 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
         tbl %>% # match
           dplyr::mutate(
             cohort_k1 = dplyr::case_when(
-              BYr_k1 >= 1600 & BYr_k1 < 1700 ~ 16L,
-              BYr_k1 >= 1700 & BYr_k1 < 1800 ~ 17L,
-              BYr_k1 >= 1800 & BYr_k1 < 1900 ~ 18L,
-              BYr_k1 >= 1900 & BYr_k1 < 2000 ~ 19L,
-              BYr_k1 >= 2000 & BYr_k1 < 2100 ~ 20L,
+              .data$BYr_k1 >= 1600 & .data$BYr_k1 < 1700 ~ 16L,
+              .data$BYr_k1 >= 1700 & .data$BYr_k1 < 1800 ~ 17L,
+              .data$BYr_k1 >= 1800 & .data$BYr_k1 < 1900 ~ 18L,
+              .data$BYr_k1 >= 1900 & .data$BYr_k1 < 2000 ~ 19L,
+              .data$BYr_k1 >= 2000 & .data$BYr_k1 < 2100 ~ 20L,
               TRUE ~ NA_integer_
             ),
             cohort_k2 = dplyr::case_when(
-              BYr_k2 >= 1600 & BYr_k2 < 1700 ~ 16L,
-              BYr_k2 >= 1700 & BYr_k2 < 1800 ~ 17L,
-              BYr_k2 >= 1800 & BYr_k2 < 1900 ~ 18L,
-              BYr_k2 >= 1900 & BYr_k2 < 2000 ~ 19L,
-              BYr_k2 >= 2000 & BYr_k2 < 2100 ~ 20L,
+              .data$BYr_k2 >= 1600 & .data$BYr_k2 < 1700 ~ 16L,
+              .data$BYr_k2 >= 1700 & .data$BYr_k2 < 1800 ~ 17L,
+              .data$BYr_k2 >= 1800 & .data$BYr_k2 < 1900 ~ 18L,
+              .data$BYr_k2 >= 1900 & .data$BYr_k2 < 2000 ~ 19L,
+              .data$BYr_k2 >= 2000 & .data$BYr_k2 < 2100 ~ 20L,
               TRUE ~ NA_integer_
-            )) %>% dplyr::select(-c(BYr_k1,BYr_k2)) %>%
+            )) %>% dplyr::select(-c("BYr_k1","BYr_k2")) %>%
           dplyr::mutate(
-            cohort_groupings = dplyr::case_when(cohort_k1 < cohort_k2 ~ as.integer(cohort_k1*100+cohort_k2),
-                                         cohort_k1 >= cohort_k2 ~ as.integer(cohort_k2*100+cohort_k1),
+            cohort_groupings = dplyr::case_when(.data$cohort_k1 < .data$cohort_k2 ~ as.integer(.data$cohort_k1*100+.data$cohort_k2),
+                                         .data$cohort_k1 >= .data$cohort_k2 ~ as.integer(.data$cohort_k2*100+.data$cohort_k1),
                                          TRUE ~ NA_integer_)
-          ) %>% dplyr::select(-c(cohort_k1,cohort_k2))
+          ) %>% dplyr::select(-c("cohort_k1","cohort_k2"))
       }else{ tbl %>% # match
           # birthcohort
           dplyr::mutate(
             cohort_k1 = dplyr::case_when(
-              BYr_k1 >= 1600 & BYr_k1 < 1700 ~ 16L,
-              BYr_k1 >= 1700 & BYr_k1 < 1800 ~ 17L,
-              BYr_k1 >= 1800 & BYr_k1 < 1900 ~ 18L,
-              BYr_k1 >= 1900 & BYr_k1 < 2000 ~ 19L,
-              BYr_k1 >= 2000 & BYr_k1 < 2100 ~ 20L,
+              .data$BYr_k1 >= 1600 & .data$BYr_k1 < 1700 ~ 16L,
+              .data$BYr_k1 >= 1700 & .data$BYr_k1 < 1800 ~ 17L,
+              .data$BYr_k1 >= 1800 & .data$BYr_k1 < 1900 ~ 18L,
+              .data$BYr_k1 >= 1900 & .data$BYr_k1 < 2000 ~ 19L,
+              .data$BYr_k1 >= 2000 & .data$BYr_k1 < 2100 ~ 20L,
               TRUE ~ NA_integer_
             ),
             cohort_k2 = dplyr::case_when(
-              BYr_k2 >= 1600 & BYr_k2 < 1700 ~ 16L,
-              BYr_k2 >= 1700 & BYr_k2 < 1800 ~ 17L,
-              BYr_k2 >= 1800 & BYr_k2 < 1900 ~ 18L,
-              BYr_k2 >= 1900 & BYr_k2 < 2000 ~ 19L,
-              BYr_k2 >= 2000 & BYr_k2 < 2100 ~ 20L,
+              .data$BYr_k2 >= 1600 & .data$BYr_k2 < 1700 ~ 16L,
+              .data$BYr_k2 >= 1700 & .data$BYr_k2 < 1800 ~ 17L,
+              .data$BYr_k2 >= 1800 & .data$BYr_k2 < 1900 ~ 18L,
+              .data$BYr_k2 >= 1900 & .data$BYr_k2 < 2000 ~ 19L,
+              .data$BYr_k2 >= 2000 & .data$BYr_k2 < 2100 ~ 20L,
               TRUE ~ NA_integer_
             ), cohort_groupings = ifelse(
-              cohort_k1 < cohort_k2, paste(cohort_k1, cohort_k2, sep = "_"),
-              paste(cohort_k2, cohort_k1, sep = "_")
+              .data$cohort_k1 < .data$cohort_k2, paste(.data$cohort_k1, .data$cohort_k2, sep = "_"),
+              paste(.data$cohort_k2, .data$cohort_k1, sep = "_")
             )
           )
       }
@@ -749,7 +749,7 @@ summarizerFunction <- function(tbl,
                                outcome_functions,
                                mitj,
                                cnuk,
-                               range_maxi = range_max,
+                               range_maxi = NULL,
                                range_mini, verbose = FALSE, memory_manage = 0L,skinny_summarize_call=TRUE,
                                SEN=FALSE
 ) {
@@ -909,7 +909,7 @@ summarizerFunction <- function(tbl,
   if ("polychorFunction" %in% outcome_functions) {
     # get vars to unlist
     # doesn't like when there are multiple polychors
-    var_polychor_unnest <- outcome_vars[outcome_functions == "polychorFunction"]
+    var_polychor_unnest <- outcome_k1[outcome_functions == "polychorFunction"]
     unnest_parts <- c(
       unnest_parts,
       mapply(function(var) {

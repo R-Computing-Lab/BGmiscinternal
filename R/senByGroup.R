@@ -244,18 +244,18 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
 
             if (all(c("age_k1", "age_k2") %in% names(dataRelatedPair_merge))) {
               dataRelatedPair_merge <- dataRelatedPair_merge %>%
-                tidyr::drop_na(age_k1, age_k2) %>%
-                dplyr::filter(age_k1 >= min_age | age_k2 >= min_age)
+                tidyr::drop_na("age_k1", "age_k2") %>%
+                dplyr::filter(.data$age_k1 >= min_age | .data$age_k2 >= min_age)
             } else if ("age" %in% names(dataRelatedPair_merge)) {
               dataRelatedPair_merge <- dataRelatedPair_merge %>%
-                tidyr::drop_na(age) %>%
-                dplyr::filter(age >= min_age)
+                tidyr::drop_na("age") %>%
+                dplyr::filter(.data$age >= min_age)
             }
             if (verbose == TRUE) {
               message(paste(
                 i, addRel_mins[i],
                 "Filtering people who didn't live to",
-                min_age, " ", current_rows - nrow(dataRelatedPair_merge), "removed"
+                min_age, " ", full_rows - nrow(dataRelatedPair_merge), "removed"
               ))
             }
           }
@@ -316,7 +316,7 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
             dataRelatedPair_merge <- data.table::rbindlist(
               list(
                 dataRelatedPair_merge,
-                dataRelatedPair_merge[, ..dxlist]
+                dataRelatedPair_merge[, .SD, .SDcols = dxlist]
               ),
               use.names = FALSE
             )
@@ -329,7 +329,7 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
           message("loop by common environment")
         }
         for (k in 1:length(cnu)) {
-          current_nrows <- nrow(dataRelatedPair_merge %>% dplyr::filter(cnuRel == cnu[k]))
+          current_nrows <- nrow(dataRelatedPair_merge %>% dplyr::filter(.data$cnuRel == cnu[k]))
 
           if (verbose) {
             message(paste("number of rows for", cnu[k], current_nrows))
@@ -346,7 +346,7 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
             cnuk <- cnu[k]
             mitj <- mit[j]
 
-            temp <- try_NA(dataRelatedPair_merge %>% dplyr::filter(cnuRel == cnuk) %>%
+            temp <- try_NA(dataRelatedPair_merge %>% dplyr::filter(.data$cnuRel == cnuk) %>%
                              sliceFunction(slice_1000 = slice_1000, memory_manage = memory_manage) %>%
                              mutateFunction(mutate_vars = mutate_vars, verbose = verbose, memory_manage = memory_manage) %>%
                              #     group_by(ID1) %>% dplyr::mutate(
@@ -445,7 +445,7 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
 #'
 #' @importFrom magrittr %>%
 #' @importFrom dplyr filter group_by ungroup mutate row_number
-#' @importFrom stats var binomial
+#' @importFrom stats var binomial as.formula
 #' @importFrom lme4 VarCorr
 #' @export
 estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
@@ -462,13 +462,13 @@ estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
     ID = c(tbl$ID1, tbl$ID2),
     outcome = c(tbl[[outcome_k1]], tbl[[outcome_k2]])
   ) %>%
-    dplyr::filter(!is.na(outcome))
+    dplyr::filter(!is.na(.data$outcome))
 
   if (method == "mean") {
     # ICC estimated as ratio of between to total variance of per-ID means
     df_id <- df_long %>%
-      dplyr::group_by(ID) %>%
-      dplyr::summarise(mu = mean(outcome), .groups = "drop")
+      dplyr::group_by(.data$ID) %>%
+      dplyr::summarise(mu = mean(.data$outcome), .groups = "drop")
 
     between_var <- var(df_id$mu)
     total_var <- var(df_long$outcome)
@@ -479,13 +479,13 @@ estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
   } else if (method == "latent") {
     # For binary: ICC on logistic latent scale; for continuous: standard ICC
     df_long <- df_long %>%
-      dplyr::group_by(ID) %>%
+      dplyr::group_by(.data$ID) %>%
       dplyr::filter(dplyr::n() > 1) %>%
       dplyr::ungroup()
 
     person_means <- df_long %>%
-      dplyr::group_by(ID) %>%
-      dplyr::summarise(mean_outcome = mean(outcome), .groups = "drop")
+      dplyr::group_by(.data$ID) %>%
+      dplyr::summarise(mean_outcome = mean(.data$outcome), .groups = "drop")
 
     between_var <- var(person_means$mean_outcome)
 
@@ -501,7 +501,7 @@ estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
 
   } else if (method=="lmer"){
 
-    icc_model <- lme4::lmer(outcome ~ 1 + (1 | ID), data = df_long)
+    icc_model <- lme4::lmer(stats::as.formula("outcome ~ 1 + (1 | ID)"), data = df_long)
 
     # Extract variance components
     var_components <- as.data.frame(lme4::VarCorr(icc_model))
@@ -514,10 +514,10 @@ estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
   } else if (method=="psych"){
     library(psych) # nolint: undesirable_function_linter
     icc_data <- df_long %>%
-      dplyr::group_by(ID) %>%
+      dplyr::group_by(.data$ID) %>%
       dplyr::mutate(obs_num = dplyr::row_number()) %>%
       dplyr::ungroup() %>%
-      tidyr::pivot_wider(names_from = obs_num, values_from = outcome)
+      tidyr::pivot_wider(names_from = "obs_num", values_from = "outcome")
 
     # compute ICC (only works if enough repeated measures per person)
     icc <- psych::ICC(icc_data[,-1])  # drop ID column
@@ -528,11 +528,11 @@ estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
     }
 
     df_long <- df_long %>%
-      dplyr::group_by(ID) %>%
+      dplyr::group_by(.data$ID) %>%
       dplyr::filter(dplyr::n() > 1) %>%
       dplyr::ungroup()
 
-    model <- lme4::glmer(outcome ~ 1 + (1 | ID), data = df_long, family = stats::binomial())
+    model <- lme4::glmer(stats::as.formula("outcome ~ 1 + (1 | ID)"), data = df_long, family = stats::binomial())
     vc <- as.data.frame(lme4::VarCorr(model))$vcov[1]
     icc <- vc / (vc + (pi^2 / 3))  # Latent scale variance for logistic link
     return(icc)
