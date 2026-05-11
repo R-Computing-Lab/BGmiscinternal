@@ -6,14 +6,14 @@
 \alias{BGmiscinternal-package}
 \title{BGmiscinternal: Internal extension of BGmisc}
 \description{
-This is an internal extension package for functions that are helpful to the research team, but either require too many dependencies for BGmisc or are very bespoke
+This is an internal extension package for functions that are helpful to the research team. They either require too many dependencies for BGmisc or are very bespoke.
 }
 \author{
-\strong{Maintainer}: Jane Doe \email{jane@example.com}
+\strong{Maintainer}: S. Mason Garrison \email{garrissm@wfu.edu} (\href{https://orcid.org/0000-0002-4804-6003}{ORCID})
 
 Authors:
 \itemize{
-  \item Jane Doe \email{jane@example.com}
+  \item S. Mason Garrison \email{garrissm@wfu.edu} (\href{https://orcid.org/0000-0002-4804-6003}{ORCID})
 }
 
 }

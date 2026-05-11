@@ -3,7 +3,6 @@
 export(SENByGroup)
 export(correlateOutcomesByGroup)
 export(estimate_icc_latent_from_dyadic)
-export(hello)
 export(mp_id_to_numeric)
 importFrom(data.table,":=")
 importFrom(data.table,as.data.table)

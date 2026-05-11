@@ -26,7 +26,7 @@
 #'
 #' @keywords internal
 try_NA <- function(expr) {
-  tryCatch(expr, error = function(err) NA)
+  tryCatch(expr, error = function(err){return(NA)})
 }
 
 

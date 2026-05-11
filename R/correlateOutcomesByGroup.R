@@ -7,7 +7,7 @@
 #------------------------------------------------------------------------------
 
 ## First are the helper functions
-options(scipen = 10, digits = 11)
+
 ## passes subset if slice_1000 is true, otherwise passes entire thing
 
 
@@ -162,7 +162,7 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
   ## make sure to use verbose to give folks a sense of what they;re asking for
   ## include a check to estimate time?
   # groupby
-  options(scipen = 10, digits = 11)
+#  options(scipen = 10, digits = 11)
   if (memory_manage > 0L) {
     gc()
   }
@@ -461,7 +461,7 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
 
             if (memory_manage > 1L) {
               gc()
-              require(tidyft) # nolint: undesirable_function_linter
+
               # this writes each iteration to disk the idea being that you loop thru all the groups
               ## not great solution but... it does let you use mutate once
 
@@ -501,9 +501,9 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                   #    mutateFunction(mutate_vars=mutate_vars,verbose=verbose, memory_manage = memory_manage)%>%
                   group_byFunction(grouping_vars, verbose = verbose, memory_manage = memory_manage) %>%
                   summarizerFunction(
-                    outcome_k1,
-                    outcome_k2,
-                    outcome_functions,
+                    outcome_k1=outcome_k1,
+                    outcome_k2=outcome_k2,
+                    outcome_functions=outcome_functions,
                     cnuk = cnuk, mitj = mitj,
                     range_maxi = range_max,
                     range_mini = range_min, verbose = verbose,
