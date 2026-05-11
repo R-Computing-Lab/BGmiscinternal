@@ -99,6 +99,13 @@ options(scipen = 10, digits = 11)
 #' @return Called primarily for its side effect of writing a CSV file to
 #'   \code{file_path_stem}.  Returns \code{NULL} invisibly.
 #'
+#' @importFrom magrittr %>%
+#' @importFrom tidyr drop_na
+#' @importFrom dplyr filter across select
+#' @importFrom tidyselect where
+#' @importFrom data.table rbindlist fwrite
+#' @importFrom readr write_rds read_rds
+#' @importFrom utils read.csv
 #' @export
 correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                                      binwidth_num = c(.1, .05),

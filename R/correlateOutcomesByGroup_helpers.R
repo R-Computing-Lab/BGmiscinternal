@@ -37,6 +37,11 @@ options(scipen = 10, digits = 11)
 #'
 #' @return A tibble with integer columns wherever conversion was possible.
 #'
+#' @importFrom magrittr %>%
+#' @importFrom dplyr mutate across
+#' @importFrom tidyselect where
+#' @importFrom data.table ":=" as.data.table
+#' @importFrom tibble as_tibble
 #' @keywords internal
 convert_to_integer <- function(tbl,memory_manage = 0L){
   if(memory_manage<1){
@@ -89,6 +94,8 @@ try_NA = function(expr){
 #' @return A data frame or tibble with at most 1 000 rows when
 #'   \code{slice_1000 = TRUE}, otherwise the original \code{tbl}.
 #'
+#' @importFrom magrittr %>%
+#' @importFrom dplyr slice
 #' @keywords internal
 sliceFunction <- function(tbl, slice_1000, memory_manage = 0L) {
   if (slice_1000==TRUE) {
@@ -119,6 +126,8 @@ sliceFuction <- sliceFunction
 #'
 #' @return A grouped (or ungrouped) data frame / tibble.
 #'
+#' @importFrom magrittr %>%
+#' @importFrom dplyr group_by
 #' @keywords internal
 group_byFunction <- function(tbl, grouping_vars, verbose = FALSE, memory_manage = 0L) {
   if (length(grouping_vars) > 1) {
@@ -202,6 +211,8 @@ group_byFunction <- function(tbl, grouping_vars, verbose = FALSE, memory_manage 
 #'
 #' @return A data frame or tibble with the requested derived columns added.
 #'
+#' @importFrom magrittr %>%
+#' @importFrom dplyr select
 #' @keywords internal
 mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0L ) {
   # subfunctions
@@ -732,6 +743,7 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE,  memory_manage = 0
 #' @return A one-row (or one-row-per-group) tibble containing the summary
 #'   statistics for the current bin.
 #'
+#' @importFrom magrittr %>%
 #' @keywords internal
 summarizerFunction <- function(tbl,
                                outcome_k1,
@@ -970,6 +982,7 @@ meanFunction <- function(x) {
 #' @return A single numeric value: the sample standard deviation of the
 #'   non-missing elements of \code{x}.
 #'
+#' @importFrom stats sd
 #' @keywords internal
 sdFunction <- function(x) {
   sd(x, na.rm = TRUE)
@@ -982,6 +995,7 @@ sdFunction <- function(x) {
 #'
 #' @param x A numeric vector.
 #' @return A single numeric value: the 25th percentile of \code{x}.
+#' @importFrom stats quantile
 #' @keywords internal
 
 q25Function <- function(x) {
@@ -995,6 +1009,7 @@ q25Function <- function(x) {
 #'
 #' @param x A numeric vector.
 #' @return A single numeric value: the 75th percentile of \code{x}.
+#' @importFrom stats quantile
 #' @keywords internal
 
 q75Function <- function(x) {
@@ -1008,6 +1023,7 @@ q75Function <- function(x) {
 #'
 #' @param x A numeric vector.
 #' @return A single numeric value: the median of \code{x}.
+#' @importFrom stats quantile
 #' @keywords internal
 
 q50Function <- function(x) {
@@ -1088,6 +1104,7 @@ make_input_file <- function(data_path,df_foldername,binwidth_cha,mit,range_min,r
 #' @return A data frame (tibble-compatible) with the contents of
 #'   \code{input_file}, or \code{NA} if reading fails.
 #'
+#' @importFrom magrittr %>%
 #' @keywords internal
 read_kinbin <- function(input_file, drop_variables = c("mitRel"), verbose = FALSE) {
   dataRelatedPair_merge <- try_NA(data.table::fread(input_file,

@@ -1,13 +1,3 @@
-#' @importFrom magrittr %>%
-#' @importFrom dplyr across filter group_by row_number select slice ungroup
-#' @importFrom tidyr drop_na
-#' @importFrom tidyselect where
-#' @importFrom data.table := as.data.table fwrite rbindlist
-#' @importFrom tibble as_tibble
-#' @importFrom readr read_rds write_rds
-#' @importFrom lme4 VarCorr
-#' @importFrom stats binomial quantile sd var
-#' @importFrom utils read.csv
 #' @keywords internal
 "_PACKAGE"
 

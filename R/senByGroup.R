@@ -68,6 +68,12 @@
 #' @return Called primarily for its side effect of writing a CSV file.
 #'   Returns \code{NULL} invisibly.
 #'
+#' @importFrom magrittr %>%
+#' @importFrom tidyr drop_na
+#' @importFrom dplyr filter across
+#' @importFrom tidyselect where
+#' @importFrom data.table rbindlist fwrite
+#' @importFrom utils read.csv
 #' @export
 SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
                        binwidth_num = c(.1, .05),
@@ -437,6 +443,10 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
 #'
 #' @return A single numeric value: the estimated ICC.
 #'
+#' @importFrom magrittr %>%
+#' @importFrom dplyr filter group_by ungroup mutate row_number
+#' @importFrom stats var binomial
+#' @importFrom lme4 VarCorr
 #' @export
 estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
                                             method = c("latent",
