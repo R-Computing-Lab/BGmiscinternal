@@ -981,10 +981,9 @@ sdFunction <- function(x) {
 #' percentile (first quartile) with \code{na.rm = TRUE}.
 #'
 #' @param x A numeric vector.
-#'
 #' @return A single numeric value: the 25th percentile of \code{x}.
-#'
 #' @keywords internal
+
 q25Function <- function(x) {
   quantile(x, na.rm = TRUE,probs = .25)
 }
@@ -995,10 +994,9 @@ q25Function <- function(x) {
 #' percentile (third quartile) with \code{na.rm = TRUE}.
 #'
 #' @param x A numeric vector.
-#'
 #' @return A single numeric value: the 75th percentile of \code{x}.
-#'
 #' @keywords internal
+
 q75Function <- function(x) {
   quantile(x, na.rm = TRUE,probs = .75)
 }
@@ -1036,6 +1034,7 @@ q50Function <- function(x) {
 #'   \code{DescTools::RelRisk()}).
 #'
 #' @keywords internal
+
 relriskFunction <- function(k1, k2, conf.level = 0.95, method = "score") {
   rr_tbl <- table(
     factor(k1, levels = c(1, 0)),
