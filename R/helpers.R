@@ -25,8 +25,8 @@
 #' @return The result of \code{expr}, or \code{NA} if an error occurs.
 #'
 #' @keywords internal
-try_NA = function(expr){
-  tryCatch(expr,error=function(err) NA)
+try_NA <- function(expr) {
+  tryCatch(expr, error = function(err){return(NA)})
 }
 
 

@@ -7,9 +7,8 @@
 #------------------------------------------------------------------------------
 
 ## First are the helper functions
-options(scipen = 10, digits = 11)
-## passes subset if slice_1000 is true, otherwise passes entire thing
 
+## passes subset if slice_1000 is true, otherwise passes entire thing
 
 
 # here's the mega function
@@ -99,6 +98,13 @@ options(scipen = 10, digits = 11)
 #' @return Called primarily for its side effect of writing a CSV file to
 #'   \code{file_path_stem}.  Returns \code{NULL} invisibly.
 #'
+#' @importFrom magrittr %>%
+#' @importFrom tidyr drop_na
+#' @importFrom dplyr filter across select
+#' @importFrom tidyselect where
+#' @importFrom data.table rbindlist fwrite
+#' @importFrom readr write_rds read_rds
+#' @importFrom utils read.csv
 #' @export
 correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                                      binwidth_num = c(.1, .05),
@@ -120,7 +126,7 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                                      #                "USA_flag_15"),
                                      # alternative is var name and function to call
                                      # collumn of functions to call
-                                     outcome_vars = NULL, #c(
+                                     outcome_vars = NULL, # c(
                                      #   "male", "age",
                                      #   "USA_flag_10",
                                      #   "USA_flag_15",
@@ -150,24 +156,24 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                                      file_path_stem = "U:/IRB_00143000/mtdna/aim1_cor/cor_",
                                      skinny_summarize_call = TRUE,
                                      age_filter = FALSE, min_age = 0,
-                                     SEN=FALSE) {
+                                     SEN = FALSE) {
   # potential options
   # expand.grid on unique values and filter via a loop
   ## make sure to use verbose to give folks a sense of what they;re asking for
   ## include a check to estimate time?
   # groupby
-  options(scipen = 10, digits = 11)
+#  options(scipen = 10, digits = 11)
   if (memory_manage > 0L) {
     gc()
   }
 
-  if(is.null(outcome_vars) && is.null(outcome_k1) && is.null(outcome_k2)){
+  if (is.null(outcome_vars) && is.null(outcome_k1) && is.null(outcome_k2)) {
     stop("At least one of the following inputs need to be provided: outcome_vars, outcome_k1, and outcome_k2")
   }
 
-  if(!is.null(outcome_vars)){
+  if (!is.null(outcome_vars)) {
     # overwriting
-    outcome_k2 <-  outcome_k1 <- outcome_vars
+    outcome_k2 <- outcome_k1 <- outcome_vars
   }
 
   if (verbose) {
@@ -219,14 +225,14 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
 
     addRel_maxs <- c(
       1.5, sort(c(addRel_real_maxs, addRel_maxs_temp),
-                decreasing = TRUE
+        decreasing = TRUE
       ),
       addRel_mins_temp[length(addRel_mins_temp)]
     )
     addRel_mins <- c(
       addRel_maxs_temp[1],
       sort(c(addRel_real_mins, addRel_mins_temp),
-           decreasing = TRUE
+        decreasing = TRUE
       ), 0
     )
 
@@ -295,12 +301,12 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
 
             if (all(c("age_k1", "age_k2") %in% names(dataRelatedPair_merge))) {
               dataRelatedPair_merge <- dataRelatedPair_merge %>%
-                drop_na(age_k1, age_k2) %>%
-                filter(age_k1 >= min_age & age_k2 >= min_age)
+                tidyr::drop_na("age_k1", "age_k2") %>%
+                dplyr::filter(.data$age_k1 >= min_age & .data$age_k2 >= min_age)
             } else if ("age" %in% names(dataRelatedPair_merge)) {
               dataRelatedPair_merge <- dataRelatedPair_merge %>%
-                drop_na(age) %>%
-                filter(age >= min_age)
+                tidyr::drop_na("age") %>%
+                dplyr::filter(.data$age >= min_age)
             }
             if (verbose == TRUE) {
               message(paste(
@@ -334,7 +340,7 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
             #  } else {
             # possible optimization
             dataRelatedPair_merge <- dataRelatedPair_merge %>%
-              dplyr::mutate(across(where(is.numeric), round, 3))
+              dplyr::mutate(dplyr::across(tidyselect::where(is.numeric), round, 3))
 
             # %>%
             # dataRelatedPair_merge <- convert_to_integer(dataRelatedPair_merge,memory_manage =  memory_manage)
@@ -351,7 +357,11 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
           message(paste(
             i, addRel_mins[i],
             "was skipped because it was ",
-            if(length(dataRelatedPair_merge) == 0){"empty"}else{paste0(nrow(dataRelatedPair_merge), "which is bigger than ", max_kin_per_bin)}
+            if (length(dataRelatedPair_merge) == 0) {
+              "empty"
+            } else {
+              paste0(nrow(dataRelatedPair_merge), "which is bigger than ", max_kin_per_bin)
+            }
           ))
           remove(dataRelatedPair_merge)
           if (memory_manage > 0L) {
@@ -408,21 +418,20 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
               dxlist <- dxlist[!dxlist %in% "cnuRel"]
               dxlist_main <- dxlist_main[!dxlist_main %in% "cnuRel"]
             }
-            if(verbose){
-              print(names(dataRelatedPair_merge[, ..dxlist_main]))
-              print(names(dataRelatedPair_merge[, ..dxlist]))
+            if (verbose) {
+              print(names(dataRelatedPair_merge[, .SD, .SDcols = dxlist_main]))
+              print(names(dataRelatedPair_merge[, .SD, .SDcols = dxlist]))
             }
-            dataRelatedPair_merge <- rbindlist(
+            dataRelatedPair_merge <- data.table::rbindlist(
               list(
-                dataRelatedPair_merge[, ..dxlist_main],
-                dataRelatedPair_merge[, ..dxlist]
+                dataRelatedPair_merge[, .SD, .SDcols = dxlist_main],
+                dataRelatedPair_merge[, .SD, .SDcols = dxlist]
               ),
               use.names = FALSE
             )
             gc()
             remove(dxlist)
             remove(dxlist_main)
-
           }
         }
         # loop by common environment
@@ -430,7 +439,7 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
           message("loop by common environment")
         }
         for (k in 1:length(cnu)) {
-          current_nrows <- nrow(dataRelatedPair_merge %>% dplyr::filter(cnuRel == cnu[k]))
+          current_nrows <- nrow(dataRelatedPair_merge %>% dplyr::filter(.data$cnuRel == cnu[k]))
 
           if (verbose) {
             message(paste("number of rows for", cnu[k], current_nrows))
@@ -452,7 +461,7 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
 
             if (memory_manage > 1L) {
               gc()
-              require(tidyft)
+
               # this writes each iteration to disk the idea being that you loop thru all the groups
               ## not great solution but... it does let you use mutate once
 
@@ -461,9 +470,9 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                   mutate_vars = mutate_vars, verbose = verbose, memory_manage = memory_manage
                 ) %>%
                 convert_to_integer(memory_manage = memory_manage) %>%
-                write_rds("dataRelatedPair_merge.RDS")
+                readr::write_rds("dataRelatedPair_merge.RDS")
 
-              dataRelatedPair_merge <- tidyft::setDT(dataRelatedPair_merge) %>% tidyft::filter(cnuRel == cnuk)
+              dataRelatedPair_merge <- tidyft::setDT(dataRelatedPair_merge) %>% dplyr::filter(.data$cnuRel == cnuk)
               gc()
               if (length(grouping_vars) == 1 && !is.na(grouping_vars) && grouping_vars %in% names(dataRelatedPair_merge)) {
                 grouping_loop <- unique(dataRelatedPair_merge[[grouping_vars]])
@@ -474,16 +483,16 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                 if (length(grouping_loop) == 1 && grouping_loop == 1) {
                   remove(dataRelatedPair_merge)
                   gc()
-                  dataRelatedPair_merge <- read_rds("dataRelatedPair_merge.RDS") %>%
+                  dataRelatedPair_merge <- readr::read_rds("dataRelatedPair_merge.RDS") %>%
                     tidyft::setDT() %>%
-                    tidyft::filter(cnuRel == cnuk)
+                    dplyr::filter(.data$cnuRel == cnuk)
                   gc()
                 } else {
                   remove(dataRelatedPair_merge)
                   gc()
-                  dataRelatedPair_merge <- read_rds("dataRelatedPair_merge.RDS") %>%
+                  dataRelatedPair_merge <- readr::read_rds("dataRelatedPair_merge.RDS") %>%
                     tidyft::setDT(dataRelatedPair_merge) %>%
-                    tidyft::filter(.data[[grouping_vars]] == grouping_loop[g], cnuRel == cnuk)
+                    dplyr::filter(.data[[grouping_vars]] == grouping_loop[g], .data$cnuRel == cnuk)
                   gc()
                 }
 
@@ -492,21 +501,21 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                   #    mutateFunction(mutate_vars=mutate_vars,verbose=verbose, memory_manage = memory_manage)%>%
                   group_byFunction(grouping_vars, verbose = verbose, memory_manage = memory_manage) %>%
                   summarizerFunction(
-                    outcome_k1,
-                    outcome_k2,
-                    outcome_functions,
+                    outcome_k1=outcome_k1,
+                    outcome_k2=outcome_k2,
+                    outcome_functions=outcome_functions,
                     cnuk = cnuk, mitj = mitj,
                     range_maxi = range_max,
                     range_mini = range_min, verbose = verbose,
                     memory_manage = memory_manage,
                     skinny_summarize_call = skinny_summarize_call,
-                    SEN=SEN
+                    SEN = SEN
                   )
                 gc()
               }
               gc()
               # is needed because we might loop across multiple cnus
-              dataRelatedPair_merge <- read_rds("dataRelatedPair_merge.RDS")
+              dataRelatedPair_merge <- readr::read_rds("dataRelatedPair_merge.RDS")
             } else if (memory_manage > 0L) { # clean up the this to be one variable with 3 levels, character is fine, 0L
               gc()
 
@@ -517,19 +526,19 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                 # mutateFunction(
                 #    mutate_vars = mutate_vars, verbose = verbose,  memory_manage= memory_manage
                 # ) %>% convert_to_integer(memory_manage =  memory_manage) %>%
-                write_rds("dataRelatedPair_merge.RDS")
+                readr::write_rds("dataRelatedPair_merge.RDS")
 
               dataRelatedPair_merge %>%
                 mutateFunction(
                   mutate_vars = mutate_vars, verbose = verbose, memory_manage = memory_manage
                 ) %>%
-                dplyr::filter(cnuRel == cnuk) %>%
+                dplyr::filter(.data$cnuRel == cnuk) %>%
                 convert_to_integer(memory_manage = memory_manage) %>%
-                select(-cnuRel) %>%
-                write_rds(paste0("dataRelatedPair_merge_", cnuk, ".RDS"))
+                dplyr::select(-"cnuRel") %>%
+                readr::write_rds(paste0("dataRelatedPair_merge_", cnuk, ".RDS"))
 
 
-              dataRelatedPair_merge <- dataRelatedPair_merge %>% dplyr::filter(cnuRel == cnuk)
+              dataRelatedPair_merge <- dataRelatedPair_merge %>% dplyr::filter(.data$cnuRel == cnuk)
               gc()
               # only one grouping variable
               if (length(grouping_vars) == 1 && !is.na(grouping_vars) && grouping_vars %in% names(dataRelatedPair_merge)) {
@@ -549,7 +558,7 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                 if (length(grouping_loop) == 1 && grouping_loop == 1) {
                   remove(dataRelatedPair_merge)
                   gc()
-                  dataRelatedPair_merge <- read_rds(paste0("dataRelatedPair_merge_", cnuk, ".RDS")) # %>% # this can be managed
+                  dataRelatedPair_merge <- readr::read_rds(paste0("dataRelatedPair_merge_", cnuk, ".RDS")) # %>% # this can be managed
                   #  dplyr::filter(cnuRel == cnuk)
                   gc()
                 } else if (FALSE) { # &exists("grouping_loop_grid")){
@@ -557,13 +566,13 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                   ## not complete
                   remove(dataRelatedPair_merge)
                   gc()
-                  dataRelatedPair_merge <- read_rds(paste0("dataRelatedPair_merge_", cnuk, ".RDS")) %>%
+                  dataRelatedPair_merge <- readr::read_rds(paste0("dataRelatedPair_merge_", cnuk, ".RDS")) %>%
                     dplyr::filter(.data[[grouping_vars[1]]] == grouping_loop_grid[1, g], .data[[grouping_vars[2]]] == grouping_loop_grid[2, g])
                   gc()
                 } else {
                   remove(dataRelatedPair_merge)
                   gc()
-                  dataRelatedPair_merge <- read_rds(paste0("dataRelatedPair_merge_", cnuk, ".RDS")) %>%
+                  dataRelatedPair_merge <- readr::read_rds(paste0("dataRelatedPair_merge_", cnuk, ".RDS")) %>%
                     dplyr::filter(.data[[grouping_vars]] == grouping_loop[g])
                   gc()
                 }
@@ -571,33 +580,32 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                   sliceFunction(slice_1000 = slice_1000, memory_manage = memory_manage) %>%
                   mutateFunction(mutate_vars = mutate_vars, verbose = verbose, memory_manage = memory_manage) %>%
                   group_byFunction(grouping_vars, verbose = verbose, memory_manage = memory_manage) %>%
-                  summarizerFunction(                    outcome_k1,
-                                                         outcome_k2,
-                                                         outcome_functions,
-                                                         cnuk = cnuk, mitj = mitj,
-                                                         range_maxi = range_max,
-                                                         range_mini = range_min, verbose = verbose,
-                                                         memory_manage = memory_manage,
-                                                         skinny_summarize_call = skinny_summarize_call,
-                                                         SEN=SEN
+                  summarizerFunction(outcome_k1,
+                    outcome_k2,
+                    outcome_functions,
+                    cnuk = cnuk, mitj = mitj,
+                    range_maxi = range_max,
+                    range_mini = range_min, verbose = verbose,
+                    memory_manage = memory_manage,
+                    skinny_summarize_call = skinny_summarize_call,
+                    SEN = SEN
                   )
                 gc()
               }
               gc()
-              dataRelatedPair_merge <- read_rds("dataRelatedPair_merge.RDS") # is needed when there are multiple cnu in the loop
+              dataRelatedPair_merge <- readr::read_rds("dataRelatedPair_merge.RDS") # is needed when there are multiple cnu in the loop
             } else { # unoptimized
-              temp <- debug_tbl <- try_NA(dataRelatedPair_merge %>% dplyr::filter(cnuRel == cnuk) %>%
-                                            sliceFunction(slice_1000 = slice_1000, memory_manage = memory_manage) %>%
-                                            mutateFunction(mutate_vars = mutate_vars, verbose = verbose, memory_manage = memory_manage))
+              temp <- debug_tbl <- try_NA(dataRelatedPair_merge %>% dplyr::filter(.data$cnuRel == cnuk) %>%
+                sliceFunction(slice_1000 = slice_1000, memory_manage = memory_manage) %>%
+                mutateFunction(mutate_vars = mutate_vars, verbose = verbose, memory_manage = memory_manage))
 
               if (verbose) {
                 message("Columns after mutate:")
                 print(names(debug_tbl))
 
 
-
-                poly_vars_k1 <-     outcome_k1[outcome_functions %in% c("polychorFunction", "ml_polychorFunction")]
-                poly_vars_k2 <-     outcome_k2[outcome_functions %in% c("polychorFunction", "ml_polychorFunction")]
+                poly_vars_k1 <- outcome_k1[outcome_functions %in% c("polychorFunction", "ml_polychorFunction")]
+                poly_vars_k2 <- outcome_k2[outcome_functions %in% c("polychorFunction", "ml_polychorFunction")]
 
                 if (length(poly_vars_k1) > 0) {
                   v <- poly_vars_k1[1]
@@ -622,23 +630,22 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                 }
               }
 
-              temp <- try_NA(temp   %>%
-                               group_byFunction(grouping_vars, verbose = verbose, memory_manage = memory_manage) %>%
-                               summarizerFunction(outcome_k1,
-                                                  outcome_k2,
-                                                  outcome_functions,
-                                                  cnuk = cnuk, mitj = mitj,
-                                                  range_maxi = range_max,
-                                                  range_mini = range_min,
-                                                  verbose = verbose, memory_manage = memory_manage,
-                                                  skinny_summarize_call = skinny_summarize_call,
-                                                  SEN=SEN
-                               ))
+              temp <- try_NA(temp %>%
+                group_byFunction(grouping_vars, verbose = verbose, memory_manage = memory_manage) %>%
+                summarizerFunction(outcome_k1,
+                  outcome_k2,
+                  outcome_functions,
+                  cnuk = cnuk, mitj = mitj,
+                  range_maxi = range_max,
+                  range_mini = range_min,
+                  verbose = verbose, memory_manage = memory_manage,
+                  skinny_summarize_call = skinny_summarize_call,
+                  SEN = SEN
+                ))
               # %>%
               # suppressWarnings()
               gc()
             }
-
           }
 
           # skip row writing if NA
@@ -647,9 +654,9 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
               message(paste0("Skipped writing Temp to disk. Temp was NA"), length(temp))
             }
           } else {
-            fwrite(temp,
-                   file = file_path_txt, sep = ",",
-                   append = TRUE, row.names = FALSE, col.names = FALSE
+            data.table::fwrite(temp,
+              file = file_path_txt, sep = ",",
+              append = TRUE, row.names = FALSE, col.names = FALSE
             )
             if (memory_manage > 0L) {
               gc()
@@ -672,13 +679,13 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
     } # end add
 
     # get the full file to add variable names
-    aim1_cors <- read.csv(file_path_txt, header = FALSE)
+    aim1_cors <- utils::read.csv(file_path_txt, header = FALSE)
 
 
     names(aim1_cors) <- file_names
-    fwrite(aim1_cors,
-           file = file_path_txt, sep = ",",
-           append = FALSE, row.names = FALSE, col.names = TRUE
+    data.table::fwrite(aim1_cors,
+      file = file_path_txt, sep = ",",
+      append = FALSE, row.names = FALSE, col.names = TRUE
     )
   } # end bin
   if (memory_manage > 0L) {
@@ -702,4 +709,3 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
   gc()
 }
 # note: these kin are double entered
-
