@@ -105,6 +105,8 @@
 #' @importFrom data.table rbindlist fwrite
 #' @importFrom readr write_rds read_rds
 #' @importFrom utils read.csv
+#' @importFrom rlang .data
+#' @importFrom tidyft setDT
 #' @export
 correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
                                      binwidth_num = c(.1, .05),

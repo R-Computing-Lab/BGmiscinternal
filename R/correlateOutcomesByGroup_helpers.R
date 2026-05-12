@@ -783,6 +783,9 @@ mutateFunction <- function(tbl, mutate_vars, verbose = FALSE, memory_manage = 0L
 #'   statistics for the current bin.
 #'
 #' @importFrom magrittr %>%
+#' @importFrom dplyr n_distinct
+#' @importFrom polycor polychor
+#' @importFrom rlang .data
 #' @keywords internal
 summarizerFunction <- function(tbl,
                                outcome_k1,
@@ -792,7 +795,8 @@ summarizerFunction <- function(tbl,
                                cnuk,
                                range_maxi,
                                range_mini,
-                               verbose = FALSE, memory_manage = 0L,
+                               verbose = FALSE,
+                               memory_manage = 0L,
                                skinny_summarize_call = TRUE,
                                SEN = FALSE) {
   if (length(outcome_k1) != length(outcome_functions)) {
@@ -1110,6 +1114,7 @@ q50Function <- function(x) {
 #'   \code{DescTools::RelRisk()}).
 #'
 #' @keywords internal
+#' @importFrom DescTools RelRisk
 
 relriskFunction <- function(k1, k2, conf.level = 0.95, method = "score") {
   rr_tbl <- table(

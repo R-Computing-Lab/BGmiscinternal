@@ -11,7 +11,7 @@ summarizerFunction(
   outcome_functions,
   mitj,
   cnuk,
-  range_maxi = NULL,
+  range_maxi,
   range_mini,
   verbose = FALSE,
   memory_manage = 0L,

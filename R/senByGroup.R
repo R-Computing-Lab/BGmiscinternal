@@ -70,10 +70,11 @@
 #'
 #' @importFrom magrittr %>%
 #' @importFrom tidyr drop_na
-#' @importFrom dplyr filter across
+#' @importFrom dplyr filter across group_by ungroup
 #' @importFrom tidyselect where
 #' @importFrom data.table rbindlist fwrite
 #' @importFrom utils read.csv
+#' @importFrom rlang .data
 #' @export
 SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
                        binwidth_num = c(.1, .05),
@@ -117,7 +118,7 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
   ## make sure to use verbose to give folks a sense of what they;re asking for
   ## include a check to estimate time?
   # groupby
-  options(scipen = 10, digits = 11)
+
 
   if (verbose) {
     message("starting checks")
@@ -452,7 +453,9 @@ SENByGroup <- function(df_foldername = "longevity_skinny_matpat",
 #' @importFrom magrittr %>%
 #' @importFrom dplyr filter group_by ungroup mutate row_number
 #' @importFrom stats var binomial as.formula
-#' @importFrom lme4 VarCorr
+#' @importFrom lme4 VarCorr lmer glmer
+#' @importFrom psych ICC
+#' @importFrom rlang .data
 #' @export
 estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
                                             method = c(

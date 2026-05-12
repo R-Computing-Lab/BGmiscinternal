@@ -20,4 +20,9 @@ Imports:
     tibble,
     tidyr,
     tidyselect,
-    utils
+    utils,
+    DescTools,
+    polycor,
+    psych,
+    rlang,
+    tidyft

@@ -5,8 +5,6 @@
 #' A convenience operator that returns \code{TRUE} for each element of \code{x}
 #' that is \emph{not} present in \code{table}.  It is the negation of \code{\%in\%}.
 #'
-#' @param x A vector of values to test.
-#' @param table A vector of values to test against.
 #'
 #' @return A logical vector the same length as \code{x}: \code{TRUE} where
 #'   \code{x[i]} is not in \code{table}, \code{FALSE} otherwise.
