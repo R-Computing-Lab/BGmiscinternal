@@ -419,13 +419,13 @@ correlateOutcomesByGroup <- function(df_foldername = "longevity_skinny_matpat",
               dxlist_main <- dxlist_main[!dxlist_main %in% "cnuRel"]
             }
             if (verbose) {
-              print(names(dataRelatedPair_merge[, .SD, .SDcols = dxlist_main]))
-              print(names(dataRelatedPair_merge[, .SD, .SDcols = dxlist]))
+              print(names(dataRelatedPair_merge[, ..dxlist_main]))
+              print(names(dataRelatedPair_merge[, ..dxlist]))
             }
             dataRelatedPair_merge <- data.table::rbindlist(
               list(
-                dataRelatedPair_merge[, .SD, .SDcols = dxlist_main],
-                dataRelatedPair_merge[, .SD, .SDcols = dxlist]
+                dataRelatedPair_merge[, ..dxlist_main],
+                dataRelatedPair_merge[, ..dxlist]
               ),
               use.names = FALSE
             )
