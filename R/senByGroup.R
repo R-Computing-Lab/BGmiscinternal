@@ -519,7 +519,7 @@ estimate_icc_latent_from_dyadic <- function(tbl, outcome_var,
     icc <- sigma_b / (sigma_b + sigma_e)
     return(icc)
   } else if (method == "psych") {
-    library(psych) # nolint: undesirable_function_linter
+
     icc_data <- df_long %>%
       dplyr::group_by(.data$ID) %>%
       dplyr::mutate(obs_num = dplyr::row_number()) %>%

@@ -4,7 +4,10 @@
 \alias{\%notin\%}
 \title{Not-In Operator}
 \usage{
-... \%notin\% NA
+\%notin\% ...
+}
+\arguments{
+\item{...}{A vector of values to be matched against (typically a constant or a column}
 }
 \value{
 A logical vector the same length as \code{x}: \code{TRUE} where

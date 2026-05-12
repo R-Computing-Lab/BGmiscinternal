@@ -14,18 +14,19 @@
 try_NA <- function(expr) {
   tryCatch(expr, error = function(err){return(NA)})
 }
+
 #' Not-In Operator
 #'
 #' A convenience operator that returns \code{TRUE} for each element of \code{x}
 #' that is \emph{not} present in \code{table}.  It is the negation of \code{\%in\%}.
-#'
+#' @param ... A vector of values to be matched against (typically a constant or a column
 #'
 #' @return A logical vector the same length as \code{x}: \code{TRUE} where
 #'   \code{x[i]} is not in \code{table}, \code{FALSE} otherwise.
-#'
 #' @keywords internal
-`%notin%` <- Negate(`%in%`)
+#' @usage \%notin\% ...
 
+`%notin%` <- Negate(`%in%`)
 
 
 #' Convert MP ID to Numeric
