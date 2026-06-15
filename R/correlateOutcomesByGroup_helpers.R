@@ -1068,7 +1068,7 @@ relriskFunction <- function(k1, k2, conf.level = 0.95, method = "score") {
 #' @param df_foldername Character string: name of the dataset/folder.
 #' @param binwidth_cha Character string representation of the bin width (e.g.
 #'   \code{"10"} for a 10 \% bin).
-#' @param mit Value of the mitochondrial-DNA relatedness flag (\code{0} or
+#' @param mit Optional Value of the mitochondrial-DNA relatedness flag (\code{0} or
 #'   \code{1}).
 #' @param range_min Lower bound of the additive-relatedness range for this bin.
 #' @param range_max Upper bound of the additive-relatedness range for this bin.
@@ -1079,10 +1079,18 @@ relriskFunction <- function(k1, k2, conf.level = 0.95, method = "score") {
 #' @keywords internal
 make_input_file <- function(data_path,
                             df_foldername,
-                            binwidth_cha, mit,
+                            binwidth_cha,
+                            mit=NULL,
                             range_min,
-                            range_max) {
-  paste0(data_path, "data/", df_foldername, "_", binwidth_cha, "/df_mt", mit, "_r", range_min, "-r", range_max, ".csv")
+                            range_max){
+  fold_string <-     paste0(data_path,"data/", df_foldername, "_", binwidth_cha, "/df_")
+  if(!is.null(mit)){
+    fold_mit_string <-  paste0(fold_string,"mt", mit, "_")
+    }else{
+      fold_mit_string <-  fold_string
+    }
+  
+    paste0(fold_mit_string,"r", range_min, "-r", range_max, ".csv")
 }
 
 
